@@ -803,7 +803,7 @@ const P={
   osaka_castle:imgPath('Osaka Castle.jpg'),
   nakanoshima:imgPath('Nakanoshima Park.webp'),
   denden:imgPath('Den Den Town.jpg'),
-  tsutenkaku:imgPath('Синсэкаи\u0306.jpg'),
+  tsutenkaku:imgPath('Синсэкай.jpg'),
   umeda:imgPath('Umeda Sky Building.jpg'),
   toji:imgPath('To-ji.jpg'),
   tofukuji:imgPath('Tofuku-ji.jpg'),
@@ -812,7 +812,7 @@ const P={
   gion:imgPath('Гион.webp'),
   higashiyama:imgPath('Хигасияма.jpg'),
   nishiki:imgPath('Nishiki Market.jpg'),
-  nijo:imgPath('Замок Нидзе\u0308.webp'),
+  nijo:imgPath('Замок Нидзё.webp'),
   arashiyama:imgPath('Arashiyama Bamboo.jpg'),
   usj:imgPath('Universal Studios Japan.jpg'),
   sensoji:imgPath('Senso-ji.jpg'),
@@ -880,9 +880,9 @@ const DAYS=[
   {n:1,name:'Sumiyoshi Taisha',jp:'住吉大社',desc:'Крупнейшее и старейшее синтоистское святилище Осаки — прообраз тысяч других.',price:'Бесплатно',hours:'6:00–17:00',img:P.sumiyoshi,lat:34.6117,lng:135.4931},
   {n:2,name:'Osaka Castle',jp:'大阪城',desc:'Главный символ города. Музей внутри, панорама с верхней башни.',price:'¥600 · 273 ₽',hours:'9:00–17:00',img:P.osaka_castle,lat:34.6873,lng:135.5262},
   {n:3,name:'Nakanoshima Park',jp:'中之島公園',desc:'Исторический парк на острове между каналами, рядом с классической ратушей.',price:'Бесплатно',hours:'24/7',img:P.nakanoshima,lat:34.6928,lng:135.5039},
-  {n:4,name:'Umeda Sky Building',jp:'梅田スカイビル',desc:'Небоскрёб-арка со смотровой «Floating Garden» на высоте 170 м.',price:'¥1,500 · 684 ₽',hours:'10:00–22:30',img:P.tsutenkaku,lat:34.7038,lng:135.4900},
+  {n:4,name:'Umeda Sky Building',jp:'梅田スカイビル',desc:'Небоскрёб-арка со смотровой «Floating Garden» на высоте 170 м.',price:'¥1,500 · 684 ₽',hours:'10:00–22:30',img:P.umeda,lat:34.7038,lng:135.4900},
   {n:5,name:'Den Den Town',jp:'電電タウン',desc:'Осакская Акихабара: электроника, аниме, манга, мэйд-кафе.',price:'Бесплатно',hours:'10:00–20:00',img:P.denden,lat:34.6621,lng:135.5070},
-  {n:6,name:'Shinsekai',jp:'新世界',desc:'Ретро-квартал 1950-х с башней Цутэнкаку, уличной едой и ностальгией.',price:'Бесплатно',hours:'24/7',img:P.umeda,lat:34.6519,lng:135.5063},
+  {n:6,name:'Shinsekai',jp:'新世界',desc:'Ретро-квартал 1950-х с башней Цутэнкаку, уличной едой и ностальгией.',price:'Бесплатно',hours:'24/7',img:P.tsutenkaku,lat:34.6519,lng:135.5063},
  ],
  budget:{transport:'¥500 · 228 ₽',entry:'¥2,100 · 957 ₽',total:'¥2,600 · 1 185 ₽'}},
 
@@ -940,11 +940,11 @@ const DAYS=[
 
 {tab:'24 сент',city:'Фудзи → Токио',jp:'東京',mapColor:'#888',
  note:'День переезда в Токио. Заселение и прогулка по Синдзюку вечером.',
- transit:[{icon:'train',route:'14:08 Kawaguchiko → Shinjuku',detail:'Fuji-Excursion 32, 2 ч',cost:'¥4,200 · 1 914 ₽'}],
+ transit:[{icon:'train',route:'14:08 – 16:06 · Kawaguchiko → Shinjuku',detail:'Fuji-Excursion 32',cost:'¥4,200 · 2 000 ₽'}],
  places:[
   {n:1,name:'Shinjuku',jp:'新宿',desc:'Заселение, прогулка по вечернему Синдзюку — огни неона, небоскрёбы, парки.',price:'Бесплатно',hours:'',img:P.shinjuku,lat:35.6897,lng:139.7006},
  ],
- budget:{transport:'¥4,200 · 1 914 ₽',total:'¥4,200 · 1 914 ₽'}},
+ budget:{transport:'¥4,200 · 2 000 ₽',total:'¥4,200 · 2 000 ₽'}},
 
 {tab:'25 сент',city:'Токио · Центр',jp:'東京',mapColor:'#888',
  transit:[{icon:'metro',route:'Метро Тиёда / Гиндза',detail:'Akasaka-Mitsuke → Акихабара',cost:'¥300–500 · 137–228 ₽'}],
@@ -1324,11 +1324,11 @@ DAYS.forEach((d,i)=>{
 const EXPENSES=[
   {cat:'Транспорт',items:[
     {name:'Осака → Фудзи (Синкансэн)',jpy:'¥9,600',rub:'4 376 ₽'},
-    {name:'Kawaguchiko → Shinjuku',jpy:'¥4,200',rub:'1 914 ₽'},
-    {name:'Метро Токио (14 дней)',jpy:'~¥5,000',rub:'~2 279 ₽'},
     {name:'Автобус Mishima → Kawaguchiko',jpy:'¥2,500',rub:'1 140 ₽'},
+    {name:'Kawaguchiko → Shinjuku',jpy:'¥4,200',rub:'1 914 ₽'},
     {name:'Токио ↔ Камакура/Эносима',jpy:'¥2,300',rub:'1 048 ₽'},
-  ],total:{jpy:'~¥23,600',rub:'~10 757 ₽'}},
+    {name:'Kawaguchiko → Shinjuku (Токио)',jpy:'¥4,200',rub:'2 000 ₽'},
+  ],total:{jpy:'~¥22,800',rub:'~10 478 ₽'}},
   {cat:'Входные билеты',items:[
     {name:'Osaka Castle',jpy:'¥600',rub:'273 ₽'},
     {name:'Umeda Sky Building',jpy:'¥1,500',rub:'684 ₽'},
@@ -1361,8 +1361,8 @@ expPanel.innerHTML=`
     </div>`).join('')}
   <div class="exp-total">
     <div class="t-label">без авиабилетов и отелей</div>
-    <div class="t-jpy">~¥56,000</div>
-    <div class="t-rub">(~25 525₽)</div>
+    <div class="t-jpy">~¥54,800</div>
+    <div class="t-rub">(~25 246₽)</div>
   </div>`;
 panelsEl.appendChild(expPanel);
 panelsEl.appendChild(placesPanel);
