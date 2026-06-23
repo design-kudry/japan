@@ -1,0 +1,10 @@
+japan-trip.html
+.DS_Store
+.claude/
+
+# specs & local planning (not for git)
+places-spec.txt
+*-spec.txt
+specs/
+17-30-сентября.txt
+17-30*

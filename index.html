@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
 <title>Япония · 17–30 сентября</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F9F9F7;
+  --bg:#FFFFFF;
   --surface:#FFFFFF;
   --surface-dim:#F3F3F1;
   --border:#E3E3E0;
@@ -18,6 +21,17 @@
   --text-2:#5A5A57;
   --text-3:#9A9A97;
   --r:12px;
+  --page-max:1008px;
+  --viewport-pad:32px;
+  --cards-gap:32px;
+  --cards-cols:3;
+  --card-max:288px;
+  --card-w:min(
+    var(--card-max),
+    calc((min(100vw,var(--page-max)) - var(--viewport-pad) - (var(--cards-cols) - 1) * var(--cards-gap)) / var(--cards-cols))
+  );
+  --cards-row-w:calc(var(--cards-cols) * var(--card-w) + (var(--cards-cols) - 1) * var(--cards-gap));
+  --content-w:var(--cards-row-w);
 }
 html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{
@@ -31,41 +45,136 @@ body{
 }
 .jp{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
 
-/* ─── HEADER ─── */
-.site-header{
-  background:rgba(249,249,247,.94);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
+/* ─── VIEW NAV ─── */
+.view-nav{
+  background:var(--bg);
   border-bottom:1px solid var(--border);
-  padding:16px 20px;
   position:sticky;top:0;z-index:200;
+  padding:10px 16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 }
-.site-header-inner{
-  display:flex;justify-content:space-between;align-items:center;
-  max-width:640px;margin:0 auto;
+.view-nav-inner{
+  display:flex;gap:4px;
+  flex:1;
 }
-.site-header h1{
+.view-btn{
+  flex:1;
+  text-align:center;
+  padding:8px 12px;
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:20px;font-weight:700;
-  color:var(--text-1);letter-spacing:-0.648px;line-height:1.2;
+  font-size:12px;font-weight:400;
+  color:var(--text-3);
+  cursor:pointer;
+  border-radius:20px;
+  border:1px solid transparent;
+  transition:all .15s ease;
+  user-select:none;letter-spacing:-0.3px;
 }
-.header-sub{
+.view-btn.active{
+  color:#fff;font-weight:600;
+  background:var(--text-1);
+  border-color:var(--text-1);
+}
+.view-btn:hover:not(.active){color:var(--text-1);background:var(--surface-dim)}
+.view-nav-bar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
+.view-nav-title{
+  display:none;
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:11px;color:var(--text-3);
-  margin-top:2px;letter-spacing:-0.648px;font-weight:400;
+  font-size:13px;font-weight:600;
+  color:var(--text-1);
+  letter-spacing:-0.3px;
+}
+.burger-btn{
+  display:none;
+  width:36px;height:36px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  cursor:pointer;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:0;flex-shrink:0;
+  margin-left:auto;
+  -webkit-tap-highlight-color:transparent;
+}
+.burger-btn span{
+  display:block;width:16px;height:1.5px;
+  background:var(--text-1);border-radius:1px;
+  transition:transform .2s,opacity .2s;
+}
+body.menu-open .burger-btn span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+body.menu-open .burger-btn span:nth-child(2){opacity:0}
+body.menu-open .burger-btn span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+.mobile-menu{
+  display:none;
+  position:absolute;left:0;right:0;top:100%;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  padding:8px 16px 12px;
+  flex-direction:column;gap:4px;
+  z-index:210;
+}
+body.menu-open .mobile-menu{display:flex}
+.mobile-menu-item{
+  width:100%;
+  text-align:left;
+  padding:12px 14px;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:14px;font-weight:400;
+  color:var(--text-2);
+  cursor:pointer;
+  border-radius:12px;
+  border:none;background:transparent;
+  letter-spacing:-0.3px;
+}
+.mobile-menu-item.active,.mobile-menu-item:hover{
+  color:var(--text-1);
+  background:var(--surface-dim);
+  font-weight:600;
+}
+body.mode-places .tabs-wrap{display:none}
+body.mode-expenses .tabs-wrap{display:none}
+body.mode-route #panel-places{display:none}
+@media (max-width:640px){
+  body.mode-route #panel-exp{display:none}
+  body.mode-expenses .panel:not(#panel-exp){display:none}
+  body.mode-expenses #panel-exp{display:flex}
+  .view-nav{padding:10px 16px;justify-content:center}
+  .view-nav-bar{width:100%;max-width:none}
+  .view-nav-inner{display:none}
+  .burger-btn{display:flex}
+  .view-nav-title{display:block;flex:1;text-align:left}
+  .tab-exp{display:none!important}
+}
+@media (min-width:641px){
+  .mobile-menu{display:none!important}
+  body.mode-route #panel-exp{display:flex}
+  .view-nav-bar{width:var(--content-w)}
+  .view-nav-inner{width:100%}
 }
 
 /* ─── TABS ─── */
 .tabs-wrap{
   background:var(--bg);
   border-bottom:1px solid var(--border);
-  position:sticky;top:65px;z-index:190;
+  position:sticky;top:49px;z-index:190;
   min-height:52px;
   box-sizing:border-box;
   padding:10px 0;
   overflow:visible;
   display:flex;
   align-items:center;
+  justify-content:center;
 }
 .tabs-scroll{
   overflow-x:auto;
@@ -73,9 +182,11 @@ body{
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
   display:flex;
-  justify-content:center;
+  justify-content:flex-start;
   align-items:center;
-  width:100%;
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+  margin:0 auto;
   min-height:32px;
 }
 .tabs-scroll::-webkit-scrollbar{display:none}
@@ -103,31 +214,83 @@ body{
 .tab:hover:not(.active){color:var(--text-1);background:var(--surface-dim)}
 
 /* ─── PANEL ─── */
-.panel{display:none;max-width:640px;margin:0 auto;padding:24px 16px 64px}
-.panel.active{display:block}
+#panels{padding-bottom:32px}
+.panel{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  max-width:none;
+  width:100%;
+  margin:0 auto;
+  padding:40px 0 64px;
+  scroll-margin-top:105px;
+}
+.panel > *{
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
+#panel-places > .city-section{
+  width:100%;
+  max-width:none;
+}
+.panel:first-child{padding-top:24px}
+.panel{position:relative}
+.panel+.panel::before{
+  content:'';
+  position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  width:100vw;
+  border-top:1px solid var(--border);
+  pointer-events:none;
+}
+body.mode-places .panel:not(#panel-places){display:none}
+body.mode-places #panel-places{display:flex}
+#panel-places{display:none}
+#panel-places .city-section{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:48px;
+}
+#panel-places .city-section:last-child{margin-bottom:0}
+#panel-places .city-section > *{
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
+#panel-places .city-section .map-wrap{margin-bottom:24px}
+.city-title{
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:28px;font-weight:700;
+  color:var(--text-1);
+  line-height:1.1;
+  margin-bottom:20px;
+  letter-spacing:-0.5px;
+}
+.city-title-jp{font-weight:400}
 
 /* ─── DAY HEADER ─── */
-.day-header{margin-bottom:28px;padding-top:4px}
+.day-header{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:28px;
+  padding-top:4px;
+}
 .day-index{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size:10px;font-weight:400;
-  color:var(--text-3);letter-spacing:-0.2px;
-  text-transform:lowercase;margin-bottom:10px;
-  display:flex;align-items:center;gap:10px;
+  color:var(--text-3);
+  text-transform:lowercase;
+  line-height:11px;
 }
-.day-index::before{content:'—';color:var(--border-strong)}
 .day-title{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:48px;font-weight:700;
-  color:var(--text-1);line-height:.95;
-  letter-spacing:-1.5px;
+  font-size:48px;
+  color:var(--text-1);
+  line-height:45.6px;
 }
-.day-jp{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:12px;font-weight:400;color:var(--text-3);
-  margin-top:8px;letter-spacing:-0.3px;
-}
-.day-divider{display:none}
+.day-city{font-weight:700}
+.day-city-jp{font-weight:400}
 
 /* ─── NOTE ─── */
 .day-note{
@@ -211,12 +374,19 @@ body{
 .map-fs-close:hover{background:var(--text-1);color:#fff}
 body.map-fs-open{overflow:hidden}
 .map-wrap--fullscreen{
-  position:fixed;inset:0;z-index:1000;
+  position:fixed;inset:0;z-index:3000;
   margin:0;border-radius:0;border:none;
   display:flex;flex-direction:column;
   background:var(--bg);
+  width:auto;max-width:none;
+  overflow:hidden;
 }
-.map-wrap--fullscreen .map-fs-top{display:flex}
+.map-wrap--fullscreen .map-fs-top{
+  display:flex;
+  position:relative;
+  z-index:1000;
+  flex-shrink:0;
+}
 .map-wrap--fullscreen .day-map{flex:1;height:auto!important;min-height:0}
 .map-wrap--fullscreen .map-actions{bottom:20px;left:16px;right:16px}
 
@@ -257,22 +427,38 @@ body.map-fs-open{overflow:hidden}
 }
 
 /* ─── PLACE CARD ─── */
+.places-grid{
+  display:grid;
+  grid-template-columns:repeat(3,var(--card-w));
+  gap:var(--cards-gap);
+  margin-bottom:28px;
+  justify-content:center;
+}
 .place{
+  width:100%;
+  max-width:var(--card-w);
   background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  margin-bottom:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:18px;
+  height:100%;
+}
+.place-photo-wrap{
+  position:relative;
+  align-self:stretch;
+  width:100%;
+  height:var(--card-w);
+  border-radius:24px;
   overflow:hidden;
+  background:var(--surface-dim);
 }
-.place-photo-wrap{position:relative;overflow:hidden}
 .place-photo{
-  width:100%;height:260px;
-  object-fit:cover;display:block;background:var(--surface-dim);
-  transition:transform .5s ease;
+  width:100%;height:100%;
+  object-fit:cover;display:block;
 }
-.place:hover .place-photo{transform:scale(1.03)}
 .place-photo-err{
-  width:100%;height:260px;
+  position:absolute;inset:0;
   background:var(--surface-dim);
   display:none;align-items:center;justify-content:center;
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -289,37 +475,113 @@ body.map-fs-open{overflow:hidden}
   display:flex;align-items:center;justify-content:center;
   letter-spacing:.02em;z-index:2;
 }
-.place-body{padding:18px 20px 20px;border-top:1px solid var(--border)}
-.place-name{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:17px;font-weight:700;
-  color:var(--text-1);line-height:1.25;
-  letter-spacing:-0.5px;
+.place-body{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-self:stretch;
+  width:100%;
+}
+.place-head{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.place-titles{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 .place-jp{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:11px;font-weight:300;
-  color:var(--text-3);margin-top:3px;
-  letter-spacing:.04em;
+  font-size:12px;font-weight:400;
+  color:var(--text-1);
+  letter-spacing:.44px;
+  line-height:12px;
 }
+.place-name{
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:18px;font-weight:700;
+  color:var(--text-1);
+  line-height:21.25px;
+}
+.place-name-short{display:none}
 .place-desc{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:13px;color:var(--text-2);
-  margin-top:10px;line-height:1.7;
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:13px;font-weight:400;
+  color:rgba(17,17,16,.75);
+  line-height:17px;
 }
-.place-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
-.tag{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:11px;font-weight:400;
-  padding:4px 10px;border-radius:20px;
-  display:inline-flex;align-items:center;gap:4px;
-  border:1px solid var(--border);
-  color:var(--text-2);
-  background:var(--surface-dim);
+.place-meta{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
 }
-.tag-price{color:var(--text-1);border-color:var(--border-strong)}
-.tag-free{color:var(--text-2)}
-.tag-hours{color:var(--text-3)}
+.place-meta-item{
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:13px;font-weight:400;
+  line-height:17px;
+  color:rgba(90,90,87,.6);
+}
+.place-meta-sep{
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:rgba(90,90,87,.45);
+  flex-shrink:0;
+}
+@media (min-width:961px){
+  .place{
+    height:auto;
+    align-self:start;
+  }
+}
+@media (max-width:960px){
+  :root{
+    --page-max:640px;
+    --cards-cols:2;
+  }
+  .places-grid{grid-template-columns:repeat(2,var(--card-w))}
+  .place-jp{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:1;
+    overflow:hidden;
+    line-height:12px;
+    font-size:clamp(10px,3vw,12px);
+  }
+  .place-name-full{display:none}
+  .place-name-short{
+    display:block;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .place-desc{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+    min-height:51px;
+    font-size:clamp(11px,3.2vw,13px);
+    line-height:17px;
+  }
+  .place-meta-item{font-size:clamp(11px,3.2vw,13px)}
+}
+@media (max-width:640px){
+  :root{--cards-gap:24px}
+  .day-title{
+    font-size:clamp(32px,12vw,48px);
+    line-height:1.05;
+  }
+  .city-title{
+    font-size:clamp(22px,8vw,28px);
+    margin-bottom:16px;
+  }
+}
+@media (max-width:380px){
+  :root{--cards-gap:16px;--viewport-pad:24px}
+}
 
 /* ─── BUDGET ─── */
 .budget-block{
@@ -465,25 +727,73 @@ body.map-fs-open{overflow:hidden}
   display:flex;align-items:center;justify-content:center;
   border:1.5px solid #fff;
 }
+.photo-marker--off-route{
+  border-color:#E53935;
+  box-shadow:0 0 0 2px rgba(229,57,53,.4),0 2px 8px rgba(0,0,0,.2);
+}
+.map-day-filters{
+  position:absolute;top:10px;left:10px;z-index:450;
+  background:rgba(255,255,255,.97);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:8px 10px;
+  max-height:148px;
+  overflow-y:auto;
+  pointer-events:auto;
+  display:flex;flex-direction:column;gap:5px;
+  max-width:min(148px,calc(100% - 56px));
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+.map-day-filter{
+  display:flex;align-items:center;gap:6px;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:10.5px;font-weight:400;
+  color:var(--text-1);
+  cursor:pointer;user-select:none;
+  letter-spacing:-.2px;white-space:nowrap;
+}
+.map-day-filter input{
+  width:13px;height:13px;margin:0;flex-shrink:0;
+  accent-color:var(--text-1);cursor:pointer;
+}
+.map-day-filter--all{
+  font-weight:600;padding-bottom:4px;
+  border-bottom:1px solid var(--border);margin-bottom:2px;
+}
+.map-day-swatch{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.map-wrap--fullscreen .map-day-filters{
+  top:14px;left:14px;max-height:min(40vh,220px);
+}
 </style>
 </head>
-<body>
+<body class="mode-route">
 
-<header class="site-header">
-  <div class="site-header-inner">
-    <div>
-      <h1>Япония</h1>
-      <p class="header-sub">17 — 30 сентября · 14 дней · Осака · Нара · Фудзи · Токио</p>
+<div class="view-nav">
+  <div class="view-nav-bar">
+    <div class="view-nav-title" id="view-nav-title">Маршрут</div>
+    <button type="button" class="burger-btn" id="burger-btn" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="view-nav-inner">
+      <div class="view-btn active" data-view="route">Маршрут</div>
+      <div class="view-btn" data-view="places">Места</div>
     </div>
   </div>
-</header>
-
-<div class="tabs-wrap"><div class="tabs-scroll"><div class="tabs" id="tabs"></div></div></div>
+  <div class="mobile-menu" id="mobile-menu">
+    <button type="button" class="mobile-menu-item active" data-view="route">Маршрут</button>
+    <button type="button" class="mobile-menu-item" data-view="places">Места</button>
+    <button type="button" class="mobile-menu-item" data-view="expenses">Расходы</button>
+  </div>
+</div>
+<div class="tabs-wrap" id="day-tabs-wrap"><div class="tabs-scroll"><div class="tabs" id="tabs"></div></div></div>
 <div id="panels"></div>
 
 <script>
 const W='https://upload.wikimedia.org/wikipedia/commons/thumb/';
-const imgPath=(f)=>encodeURI(f);
+const imgPath=(f)=>encodeURI('image/'+f);
 const P={
   namba_yasaka:imgPath('Namba Yasaka Shrine.jpg'),
   dotonbori:imgPath('Дотонбори.jpg'),
@@ -496,7 +806,7 @@ const P={
   tsutenkaku:imgPath('Синсэкаи\u0306.jpg'),
   umeda:imgPath('Umeda Sky Building.jpg'),
   toji:imgPath('To-ji.jpg'),
-  tofukuji:imgPath('Тофуку-дзи.jpg'),
+  tofukuji:imgPath('Tofuku-ji.jpg'),
   fushimi:imgPath('Fushimi Inari Taisha.jpg'),
   kiyomizu:imgPath('Kiyomizu-dera.jpg'),
   gion:imgPath('Гион.webp'),
@@ -505,29 +815,51 @@ const P={
   nijo:imgPath('Замок Нидзе\u0308.webp'),
   arashiyama:imgPath('Arashiyama Bamboo.jpg'),
   usj:imgPath('Universal Studios Japan.jpg'),
-  sensoji:W+'4/43/Sensoji_2023.jpg/330px-Sensoji_2023.jpg',
-  shibuya:W+'8/88/Shibuya_Crossing%2C_Aerial.jpg/330px-Shibuya_Crossing%2C_Aerial.jpg',
-  meiji:W+'8/8b/Meiji_Jingu_2023-3.jpg/330px-Meiji_Jingu_2023-3.jpg',
-  akihabara:W+'6/60/Sotokanda%2C_Akihabara_Electric_Town_at_night_20231114.png/330px-Sotokanda%2C_Akihabara_Electric_Town_at_night_20231114.png',
+  sensoji:imgPath('Senso-ji.jpg'),
+  sumida:imgPath('Sumida Park.jpg'),
+  nakamise:imgPath('Nakamise.jpg'),
+  tnm:imgPath('Tokyo National Museum.jpg'),
+  yanaka:imgPath('Yanaka Ginza.jpg'),
+  wb_studio:imgPath('Warner Bros. Studio Tour Tokyo.jpg'),
+  shibuya:imgPath('Shibuya Crossing.jpg'),
+  shibuya_sky:imgPath('Shibuya Sky.jpg'),
+  hachiko:imgPath('Hachiko Statue .jpg'),
+  meiji:imgPath('Meiji Shrine.jpg'),
+  golden_gai:imgPath('Golden Gai.jpg'),
+  omoide:imgPath('Omoide Yokocho.jpg'),
+  kabukicho:imgPath('Kabukicho.jpg'),
+  shimokitazawa:imgPath('Shimokitazawa.jpg'),
+  teamlab:imgPath('TeamLab Planets.jpg'),
+  national_art:imgPath('The National Art Center.jpg'),
+  azabudai:imgPath('Azabudai Hills.jpg'),
+  mori_art:imgPath('Mori Art Museum.jpg'),
+  nezu:imgPath('Nezu Shrine.jpg'),
+  kagurazaka:imgPath('Kagurazaka.jpg'),
+  ueno_park:imgPath('Ueno Park.jpg'),
+  akihabara:imgPath('Akihabara Electric Town .jpg'),
   todaiji:W+'2/2f/T%C5%8Ddai-ji_Kon-d%C5%8D.jpg/330px-T%C5%8Ddai-ji_Kon-d%C5%8D.jpg',
-  nara_park:W+'b/b4/Nara_Park_-_panoramio_%282%29.jpg/330px-Nara_Park_-_panoramio_%282%29.jpg',
-  kawaguchi:W+'1/18/KawaguchiKo.jpg/330px-KawaguchiKo.jpg',
-  fuji:W+'f/f8/View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg/330px-View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg',
-  chureito:W+'6/6e/Fujiyoshida_montage.jpg/330px-Fujiyoshida_montage.jpg',
-  hie:W+'5/5e/Tokyo_Hie-Shrine_Gate.jpg/330px-Tokyo_Hie-Shrine_Gate.jpg',
-  imperial:W+'a/ac/Seimon_Ishibashi.JPG/330px-Seimon_Ishibashi.JPG',
-  yasukuni:W+'0/08/Yasukuni_Shrine_201005.jpg/330px-Yasukuni_Shrine_201005.jpg',
-  koishikawa:W+'e/ef/Koishikawa_Korakuen_060607.jpg/330px-Koishikawa_Korakuen_060607.jpg',
-  enoshima:W+'4/42/Enoshimajinja_-05.jpg/330px-Enoshimajinja_-05.jpg',
-  kameido:W+'b/bd/Kameido_Tenjin_20130506e.jpg/330px-Kameido_Tenjin_20130506e.jpg',
-  skytree:W+'8/84/Tokyo_Skytree_2014_%E2%85%A2.jpg/330px-Tokyo_Skytree_2014_%E2%85%A2.jpg',
-  shibuya_sky:W+'4/45/SHIBUYA_SCRAMBLE_SQUARE_East_Tower.jpg/330px-SHIBUYA_SCRAMBLE_SQUARE_East_Tower.jpg',
-  hokokuji:W+'4/43/Hokoku-ji_-_Kanagawa-_2024_April_28_various_17_08_14_467000.jpeg/330px-Hokoku-ji_-_Kanagawa-_2024_April_28_various_17_08_14_467000.jpeg',
-  kenchoji:W+'a/a4/Kenchoji_Sanmon_2009.jpg/330px-Kenchoji_Sanmon_2009.jpg',
-  tsurugaoka:W+'5/5e/TsurugaokaHachiman-M8867.jpg/330px-TsurugaokaHachiman-M8867.jpg',
-  buddha:W+'c/cf/230128_Kamakura_Daibutsu_Japan04s3.jpg/330px-230128_Kamakura_Daibutsu_Japan04s3.jpg',
-  engakuji:W+'c/c3/Stairs_to_Sanmon%2C_Engaku-ji.jpg/330px-Stairs_to_Sanmon%2C_Engaku-ji.jpg',
+  nara_park:imgPath('Nara Park.jpg'),
+  kawaguchi:imgPath('Lake Kawaguchi.jpg'),
+  chureito:imgPath('Chureito Pagoda.jpg'),
+  kachi_kachi:imgPath('Kachi Kachi Ropeway.jpg'),
+  oishi:imgPath('Oishi Park.jpg'),
+  saiko:imgPath('Saiko Iyashi-no-Sato Nenba.jpg'),
+  oshino:imgPath('Oshino Hakkai.jpg'),
+  hie:imgPath('Hie Shrine.jpg'),
+  imperial:imgPath('Imperial Palace.jpg'),
+  yasukuni:imgPath('Yasukuni Shrine.jpg'),
+  koishikawa:imgPath('Koishikawa Korakuen Garden.jpg'),
+  enoshima:imgPath('Enoshima Shrine.jpg'),
+  kameido:imgPath('Kameido Tenjin Shrine.jpg'),
+  skytree:imgPath('Tokyo Skytree.jpg'),
+  hokokuji:imgPath('Hokoku-ji.jpg'),
+  kenchoji:imgPath('Kencho-ji.jpg'),
+  tsurugaoka:imgPath('Tsurugaoka Hachimangu.jpg'),
+  buddha:imgPath('Kotoku-in · Great Buddha.jpg'),
+  engakuji:imgPath('Engaku-ji.jpg'),
+  hasedera:imgPath('Hase-dera.jpg'),
   shinjuku:W+'b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/330px-Skyscrapers_of_Shinjuku_2009_January.jpg',
+  shinjuku_gyoen:imgPath('Shinjuku Gyoen.jpg'),
 };
 
 const DAYS=[
@@ -548,9 +880,9 @@ const DAYS=[
   {n:1,name:'Sumiyoshi Taisha',jp:'住吉大社',desc:'Крупнейшее и старейшее синтоистское святилище Осаки — прообраз тысяч других.',price:'Бесплатно',hours:'6:00–17:00',img:P.sumiyoshi,lat:34.6117,lng:135.4931},
   {n:2,name:'Osaka Castle',jp:'大阪城',desc:'Главный символ города. Музей внутри, панорама с верхней башни.',price:'¥600 · 273 ₽',hours:'9:00–17:00',img:P.osaka_castle,lat:34.6873,lng:135.5262},
   {n:3,name:'Nakanoshima Park',jp:'中之島公園',desc:'Исторический парк на острове между каналами, рядом с классической ратушей.',price:'Бесплатно',hours:'24/7',img:P.nakanoshima,lat:34.6928,lng:135.5039},
-  {n:4,name:'Den Den Town',jp:'電電タウン',desc:'Осакская Акихабара: электроника, аниме, манга, мэйд-кафе.',price:'Бесплатно',hours:'10:00–20:00',img:P.denden,lat:34.6621,lng:135.5070},
-  {n:5,name:'Shinsekai',jp:'新世界',desc:'Ретро-квартал 1950-х с башней Цутэнкаку, уличной едой и ностальгией.',price:'Бесплатно',hours:'24/7',img:P.tsutenkaku,lat:34.6519,lng:135.5063},
-  {n:6,name:'Umeda Sky Building',jp:'梅田スカイビル',desc:'Небоскрёб-арка со смотровой «Floating Garden» на высоте 170 м.',price:'¥1,500 · 684 ₽',hours:'10:00–22:30',img:P.umeda,lat:34.7038,lng:135.4900},
+  {n:4,name:'Umeda Sky Building',jp:'梅田スカイビル',desc:'Небоскрёб-арка со смотровой «Floating Garden» на высоте 170 м.',price:'¥1,500 · 684 ₽',hours:'10:00–22:30',img:P.tsutenkaku,lat:34.7038,lng:135.4900},
+  {n:5,name:'Den Den Town',jp:'電電タウン',desc:'Осакская Акихабара: электроника, аниме, манга, мэйд-кафе.',price:'Бесплатно',hours:'10:00–20:00',img:P.denden,lat:34.6621,lng:135.5070},
+  {n:6,name:'Shinsekai',jp:'新世界',desc:'Ретро-квартал 1950-х с башней Цутэнкаку, уличной едой и ностальгией.',price:'Бесплатно',hours:'24/7',img:P.umeda,lat:34.6519,lng:135.5063},
  ],
  budget:{transport:'¥500 · 228 ₽',entry:'¥2,100 · 957 ₽',total:'¥2,600 · 1 185 ₽'}},
 
@@ -558,7 +890,7 @@ const DAYS=[
  transit:[{icon:'train',route:'Осака → Киото',detail:'JR Токкю, 15 мин',cost:'JR Pass'}],
  places:[
   {n:1,name:'To-ji',jp:'東寺',desc:'Пятиярусная пагода 54 м — самая высокая деревянная пагода в Японии.',price:'¥500 · 228 ₽',hours:'8:00–17:00',img:P.toji,lat:34.9800,lng:135.7476},
-  {n:2,name:'Tofuku-ji',jp:'東福寺',desc:'Один из важнейших дзэн-храмов Киото с грандиозными воротами санмон.',price:'Бесплатно',hours:'9:00–16:00',img:P.tofukuji,lat:34.9716,lng:135.7757},
+  {n:2,name:'Tofuku-ji',jp:'東福寺',desc:'Один из важнейших дзэн-храмов Киото с грандиозными воротами санмон.',price:'Бесплатно',hours:'9:00–16:00',img:P.tofukuji,lat:34.9716,lng:135.7757},
   {n:3,name:'Fushimi Inari Taisha',jp:'伏見稲荷大社',desc:'Тысячи оранжевых ворот тории уходят в гору. Полный маршрут — 2–3 часа.',price:'Бесплатно',hours:'24/7',img:P.fushimi,lat:34.9671,lng:135.7727},
   {n:4,name:'Kiyomizu-dera',jp:'清水寺',desc:'«Храм чистой воды» — один из красивейших в Японии, с балконом над горой.',price:'¥500 · 228 ₽',hours:'8:00–18:00',img:P.kiyomizu,lat:34.9948,lng:135.7850},
   {n:5,name:'Gion',jp:'祇園',desc:'Квартал гейш: старинные мачия, чайные домики, шанс увидеть майко вечером.',price:'Бесплатно',hours:'24/7',img:P.gion,lat:35.0036,lng:135.7759},
@@ -593,16 +925,16 @@ const DAYS=[
  places:[
   {n:1,name:'Chureito Pagoda',jp:'忠霊塔',desc:'Пятиярусная пагода с классическим видом на Фудзи — открыточный кадр Японии.',price:'Бесплатно',hours:'24/7',img:P.chureito,lat:35.4920,lng:138.7940},
   {n:2,name:'Lake Kawaguchi',jp:'河口湖',desc:'Прогулки по набережной, велосипеды, отражение Фудзи в воде.',price:'Бесплатно',hours:'24/7',img:P.kawaguchi,lat:35.5072,lng:138.7525},
-  {n:3,name:'Kachi Kachi Ropeway',jp:'かちかち山ロープウェイ',desc:'Канатная дорога на гору Тэнтяку — лучший вид на Фудзи и озеро сверху.',price:'¥1,000 · 456 ₽',hours:'8:30–17:00',img:P.fuji,lat:35.5110,lng:138.7697},
-  {n:4,name:'Oishi Park',jp:'大石公園',desc:'Парк цветов на северном берегу озера Кавагути с панорамой на Фудзи.',price:'Бесплатно',hours:'24/7',img:P.kawaguchi,lat:35.5121,lng:138.8018},
+  {n:3,name:'Kachi Kachi Ropeway',jp:'かちかち山ロープウェイ',desc:'Канатная дорога на гору Тэнтяку — лучший вид на Фудзи и озеро сверху.',price:'¥1,000 · 456 ₽',hours:'8:30–17:00',img:P.kachi_kachi,lat:35.5110,lng:138.7697},
+  {n:4,name:'Oishi Park',jp:'大石公園',desc:'Парк цветов на северном берегу озера Кавагути с панорамой на Фудзи.',price:'Бесплатно',hours:'24/7',img:P.oishi,lat:35.5121,lng:138.8018},
  ],
  budget:{transport:'¥2,500 · 1 140 ₽',entry:'¥1,000 · 456 ₽',total:'¥3,500 · 1 595 ₽'}},
 
 {tab:'23 сент',city:'Фудзи · Сайко',jp:'富士山',mapColor:'#888',
  transit:[{icon:'bus',route:'Green Line от Kawaguchiko',detail:'До Saiko Iyashi-no-Sato, 40 мин',cost:'¥710 · 324 ₽'}],
  places:[
-  {n:1,name:'Saiko Iyashi-no-Sato Nenba',jp:'西湖いやしの里根場',desc:'Восстановленная деревня эпохи Мэйдзи у подножия Фудзи — соломенные крыши, ремёсла.',price:'¥500 · 228 ₽',hours:'9:30–16:30',img:P.fuji,lat:35.5042,lng:138.6453},
-  {n:2,name:'Oshino Hakkai',jp:'忍野八海',desc:'Восемь кристальных родниковых прудов у подножия Фудзи. Вода прозрачная до дна.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.kawaguchi,lat:35.4638,lng:138.8408},
+  {n:1,name:'Saiko Iyashi-no-Sato Nenba',jp:'西湖いやしの里根場',desc:'Восстановленная деревня эпохи Мэйдзи у подножия Фудзи — соломенные крыши.',price:'¥500 · 228 ₽',hours:'9:30–16:30',img:P.saiko,lat:35.5042,lng:138.6453},
+  {n:2,name:'Oshino Hakkai',jp:'忍野八海',desc:'Восемь кристальных родниковых прудов у подножия Фудзи. Вода прозрачная до дна.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.oshino,lat:35.4638,lng:138.8408},
  ],
  budget:{transport:'¥1,420 · 647 ₽',entry:'¥800 · 365 ₽',total:'¥2,220 · 1 012 ₽'}},
 
@@ -623,18 +955,18 @@ const DAYS=[
   {n:4,name:'Koishikawa Korakuen Garden',jp:'小石川後楽園',desc:'Один из красивейших традиционных садов Токио эпохи Эдо (XVII в.).',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.koishikawa,lat:35.7070,lng:139.7486},
   {n:5,name:'Akihabara Electric Town',jp:'秋葉原電気街',desc:'Электроника, аниме, ретро-игры, мэйд-кафе — центр японской поп-культуры.',price:'Бесплатно',hours:'10:00–21:00',img:P.akihabara,lat:35.7023,lng:139.7745},
  ],
- budget:{transport:'¥500 · 228 ₽',entry:'¥1,100 · 501 ₽',total:'¥1,600 · 729 ₽'}},
+ budget:{transport:'¥500 · 228 ₽',entry:'¥300 · 137 ₽',total:'¥800 · 365 ₽'}},
 
 {tab:'26 сент',city:'Токио · Сибуя',jp:'東京',mapColor:'#888',
  transit:[{icon:'metro',route:'JR Яматэ / метро Гиндза',detail:'Сибуя ↔ Синдзюку',cost:'¥200–300 · 91–137 ₽'}],
  places:[
   {n:1,name:'Shibuya Crossing',jp:'渋谷スクランブル',desc:'Самый загруженный перекрёсток мира — тысячи людей переходят одновременно.',price:'Бесплатно',hours:'24/7',img:P.shibuya,lat:35.6595,lng:139.7004},
   {n:2,name:'Shibuya Sky',jp:'渋谷スカイ',desc:'Смотровая на крыше Shibuya Scramble Square — 360° вид на весь Токио.',price:'¥3,000 · 1 367 ₽',hours:'10:00–22:30',img:P.shibuya_sky,lat:35.6580,lng:139.7025},
-  {n:3,name:'Hachiko Statue',jp:'ハチ公像',desc:'Бронзовая статуя верного пса — главная точка встречи у станции Сибуя.',price:'Бесплатно',hours:'24/7',img:P.shibuya,lat:35.6591,lng:139.7006},
+  {n:3,name:'Hachiko Statue',jp:'ハチ公像',desc:'Бронзовая статуя верного пса — главная точка встречи у станции Сибуя.',price:'Бесплатно',hours:'24/7',img:P.hachiko,lat:35.6591,lng:139.7006},
   {n:4,name:'Meiji Shrine',jp:'明治神宮',desc:'Главная святыня Токио в лесу из 120 000 деревьев.',price:'Бесплатно',hours:'Рассвет–закат',img:P.meiji,lat:35.6764,lng:139.6993},
-  {n:5,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'от ¥500 · от 228 ₽',hours:'Вечер–ночь',img:P.shinjuku,lat:35.6938,lng:139.7039},
-  {n:6,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'от ¥800 · от 365 ₽',hours:'17:00–24:00',img:P.shinjuku,lat:35.6920,lng:139.7007},
-  {n:7,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.shinjuku,lat:35.6939,lng:139.7023},
+  {n:5,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'Как пойдет',hours:'24/7',img:P.golden_gai,lat:35.6938,lng:139.7039},
+  {n:6,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'Как пойдет',hours:'24/7',img:P.omoide,lat:35.6920,lng:139.7007},
+  {n:7,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.kabukicho,lat:35.6939,lng:139.7023},
  ],
  budget:{transport:'¥500 · 228 ₽',entry:'¥3,000 · 1 367 ₽',total:'¥3,500 · 1 595 ₽'}},
 
@@ -643,11 +975,11 @@ const DAYS=[
  places:[
   {n:1,name:'Kameido Tenjin Shrine',jp:'亀戸天神社',desc:'Живописный синтоистский храм с деревянными мостами над прудами с кувшинками.',price:'Бесплатно',hours:'6:00–17:00',img:P.kameido,lat:35.6955,lng:139.8241},
   {n:2,name:'Tokyo Skytree',jp:'東京スカイツリー',desc:'Самая высокая башня в мире (634 м). Смотровые на 350 и 450 м.',price:'¥3,000 · 1 367 ₽',hours:'10:00–21:00',img:P.skytree,lat:35.7101,lng:139.8107},
-  {n:3,name:'Sumida Park',jp:'隅田公園',desc:'Парк вдоль реки Сумида с видом на Скайтри — лучшее место для фото башни.',price:'Бесплатно',hours:'24/7',img:P.skytree,lat:35.7123,lng:139.7995},
+  {n:3,name:'Sumida Park',jp:'隅田公園',desc:'Парк вдоль реки Сумида с видом на Скайтри — лучшее место для фото башни.',price:'Бесплатно',hours:'24/7',img:P.sumida,lat:35.7123,lng:139.7995},
   {n:4,name:'Senso-ji',jp:'浅草寺',desc:'Древнейший и самый известный буддийский храм Токио.',price:'Бесплатно',hours:'6:00–17:00',img:P.sensoji,lat:35.7148,lng:139.7967},
-  {n:5,name:'Nakamise',jp:'仲見世通り',desc:'Торговая улица к воротам Камонаримон: сувениры, снэки, традиционные сладости.',price:'Бесплатно',hours:'10:00–19:00',img:P.sensoji,lat:35.7139,lng:139.7972},
-  {n:6,name:'Tokyo National Museum',jp:'東京国立博物館',desc:'Крупнейшее художественное собрание Японии — самурайское оружие, живопись, керамика.',price:'¥1,000 · 456 ₽',hours:'9:30–17:00',img:P.sensoji,lat:35.7189,lng:139.7762},
-  {n:7,name:'Yanaka Ginza',jp:'谷中銀座',desc:'Традиционная торговая улочка 1950-х — настоящий старый Токио без реноваций.',price:'Бесплатно',hours:'10:00–18:00',img:P.skytree,lat:35.7272,lng:139.7700},
+  {n:5,name:'Nakamise',jp:'仲見世通り',desc:'Торговая улица к воротам Камонаримон: сувениры, снэки, традиционные сладости.',price:'Бесплатно',hours:'10:00–19:00',img:P.nakamise,lat:35.7139,lng:139.7972},
+  {n:6,name:'Tokyo National Museum',jp:'東京国立博物館',desc:'Художественное собрание Японии — самурайское оружие, живопись, керамика',price:'¥1,000 · 456 ₽',hours:'9:30–17:00',img:P.tnm,lat:35.7189,lng:139.7762},
+  {n:7,name:'Yanaka Ginza',jp:'谷中銀座',desc:'Традиционная торговая улочка 1950-х — настоящий старый Токио без реноваций.',price:'Бесплатно',hours:'10:00–18:00',img:P.yanaka,lat:35.7272,lng:139.7700},
  ],
  budget:{transport:'¥500 · 228 ₽',entry:'¥4,000 · 1 823 ₽',total:'¥4,500 · 2 051 ₽'}},
 
@@ -655,11 +987,11 @@ const DAYS=[
  note:'Билеты бронировать заранее — разбирают за несколько недель.',
  transit:[{icon:'metro',route:'Метро → ст. Тосимаэн',detail:'Одо линия, ~40 мин от центра',cost:'¥300–400 · 137–182 ₽'}],
  places:[
-  {n:1,name:'Warner Bros. Studio Tour Tokyo',jp:'ワーナー ブラザース スタジオツアー東京',desc:'Реальные декорации Гарри Поттера: Хогвартс, Косой переулок, Косяк № 9¾. 3–4 часа.',price:'~¥6,500 · ~2 963 ₽',hours:'По сеансам',img:P.sensoji,lat:35.7396,lng:139.6623},
+  {n:1,name:'Warner Bros. Studio Tour Tokyo',jp:'ワーナー ブラザース スタジオツアー東京',desc:'Реальные декорации Гарри Поттера: Хогвартс, Косой переулок, Косяк № 9¾',price:'¥6,500 · (2 963 ₽)',hours:'',img:P.wb_studio,lat:35.7396,lng:139.6623},
  ],
  budget:{transport:'¥600 · 273 ₽',entry:'¥6,500 · 2 963 ₽',total:'¥7,100 · 3 236 ₽'}},
 
-{tab:'29 сент',city:'Камакура · Эносима',jp:'鎌倉・江の島',mapColor:'#888',
+{tab:'29 сент',city:'Камакура',jp:'鎌倉・江の島',mapColor:'#888',
  transit:[
   {icon:'train',route:'Tokyo → Kamakura',detail:'JR Ёкосука, 55 мин',cost:'¥1,000 · 456 ₽'},
   {icon:'train',route:'Обратно Enoshima → Tokyo',detail:'Enoden + JR, ~1 ч',cost:'¥1,300 · 593 ₽'},
@@ -670,7 +1002,7 @@ const DAYS=[
   {n:3,name:'Tsurugaoka Hachimangu',jp:'鶴岡八幡宮',desc:'Главная святыня Камакуры. Лотосовые пруды, лестница в 61 ступень.',price:'Бесплатно',hours:'6:00–20:00',img:P.tsurugaoka,lat:35.3265,lng:139.5567},
   {n:4,name:'Hokoku-ji',jp:'報国寺',desc:'Дзэн-храм с бамбуковой рощей — самый атмосферный уголок Камакуры.',price:'¥300 · 137 ₽',hours:'9:00–16:00',img:P.hokokuji,lat:35.3087,lng:139.5619},
   {n:5,name:'Kotoku-in · Great Buddha',jp:'高徳院大仏',desc:'Бронзовый Будда 13 м под открытым небом. Можно зайти внутрь статуи (+¥50).',price:'¥300 · 137 ₽',hours:'8:00–16:45',img:P.buddha,lat:35.3167,lng:139.5353},
-  {n:6,name:'Hase-dera',jp:'長谷寺',desc:'Один из красивейших храмов Камакуры — смотровая с видом на залив.',price:'¥400 · 182 ₽',hours:'8:00–16:30',img:P.engakuji,lat:35.3139,lng:139.5347},
+  {n:6,name:'Hase-dera',jp:'長谷寺',desc:'Один из красивейших храмов Камакуры — смотровая с видом на залив.',price:'¥400 · 182 ₽',hours:'8:00–16:30',img:P.hasedera,lat:35.3139,lng:139.5347},
   {n:7,name:'Enoshima Shrine',jp:'江島神社',desc:'Синтоистский комплекс на острове: пещеры Ивайя, закат над океаном, вид на Фудзи.',price:'Бесплатно',hours:'24/7',img:P.enoshima,lat:35.2994,lng:139.4813},
  ],
  budget:{transport:'¥2,300 · 1 048 ₽',entry:'¥2,000 · 912 ₽',total:'¥4,300 · 1 960 ₽'}},
@@ -679,7 +1011,7 @@ const DAYS=[
  note:'Последний день — маршрут не заполнен. Идеально для шопинга, музеев или повторного посещения любимых мест.',
  transit:[],
  places:[
-  {n:1,name:'Shinjuku Gyoen',jp:'新宿御苑',desc:'Государственный сад 65 га: 450 сортов сакуры, лужайки, японская и французская зоны.',price:'¥500 · 228 ₽',hours:'9:00–18:00',img:P.shinjuku,lat:35.6850,lng:139.7100},
+  {n:1,name:'Shinjuku Gyoen',jp:'新宿御苑',desc:'Государственный сад 65 га: 450 сортов сакуры, лужайки, японская и французская зоны.',price:'¥500 · 228 ₽',hours:'9:00–18:00',img:P.shinjuku_gyoen,lat:35.6850,lng:139.7100},
   {n:2,name:'Hamarikyu Gardens',jp:'浜離宮恩賜庭園',desc:'Традиционный сад с чайным домиком прямо у Токийского залива и небоскрёбов Одайбы.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.koishikawa,lat:35.6600,lng:139.7631},
  ],
  budget:{transport:'¥500 · 228 ₽',entry:'¥800 · 365 ₽',total:'¥1,300 · 593 ₽'}},
@@ -693,21 +1025,238 @@ const ICONS={
   metro:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15V8a1 1 0 011-1h4l3 5 3-5h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M7 19l-1 2M17 19l1 2"/></svg>`,
 };
 
+// ─── PLACES CATALOG ────────────────────
+const REGIONS=[
+  {id:'osaka',name:'Осака',jp:'大阪'},
+  {id:'kyoto',name:'Киото',jp:'京都'},
+  {id:'nara',name:'Нара',jp:'奈良'},
+  {id:'fuji',name:'Фудзи',jp:'富士山'},
+  {id:'tokyo',name:'Токио',jp:'東京'},
+  {id:'kamakura',name:'Камакура',jp:'鎌倉・江の島'},
+];
+const DAY_REGION=['osaka','osaka','kyoto','nara','osaka','fuji','fuji','tokyo','tokyo','tokyo','tokyo','tokyo','kamakura','tokyo'];
+
+const EXTRA_PLACES={
+  tokyo:[
+    {name:'The National Art Center',jp:'国立新美術館',desc:'Футуристичное здание, крупнейшая выставочная площадка Японии',price:'Бесплатно',hours:'10:00–18:00',img:P.national_art,lat:35.6653,lng:139.7263},
+    {name:'Shimokitazawa',jp:'下北沢',desc:'Винтажные магазины, бары, более «местный» вайб, чем Сибуя.',price:'Бесплатно',hours:'11:00–22:00',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
+    {name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',desc:'Иммерсивное цифровое искусство в Тойосу — очень популярно',price:'¥3,800 · 1 733 ₽',hours:'8:30–22:00',img:P.teamlab,lat:35.6491,lng:139.7917},
+    {name:'Azabudai Hills',jp:'麻布台ヒルズ',desc:'Крупный многофункциональный городской комплекс',price:'Бесплатно',hours:'24/7',img:P.azabudai,lat:35.6614,lng:139.7410},
+    {name:'Mori Art Museum',jp:'森美術館',desc:'Один из ведущих музеев современного искусства — Roppongi Hills, 53 этаж',price:'¥1,800 · 821 ₽',hours:'10:00–22:00',img:P.mori_art,lat:35.6605,lng:139.7293},
+    {name:'Nezu Shrine',jp:'根津神社',desc:'Один из старейших синтоистских храмов Токио, район Бункё',price:'Бесплатно',hours:'6:00–18:00',img:P.nezu,lat:35.7202,lng:139.7628},
+    {name:'Kagurazaka',jp:'神楽坂',desc:'Исторический район в восточной части Синдзюку — узкие мощёные переулки',price:'Бесплатно',hours:'24/7',img:P.kagurazaka,lat:35.7008,lng:139.7376},
+    {name:'Ueno Park',jp:'上野恩賜公園',desc:'Один из самых известных городских парков Токио',price:'Бесплатно',hours:'24/7',img:P.ueno_park,lat:35.7148,lng:139.7734},
+  ],
+};
+
+const TYPO_WORDS='через|около|перед|после|между|ещё|уже|все|там|тут|где|или|что|как|это|при|для|про|над|под|без|под|со|об|во|не|на|но|ни|от|до|за|из|по|да|ли|же|бы|а|и|к|с|у|о|в|я';
+function typografRu(s){
+  if(!s)return s;
+  const nbsp='\u00A0';
+  return s.replace(
+    new RegExp(`(^|[\\s(—–\\-«])(${TYPO_WORDS})\\s(?=[а-яёА-ЯЁ«"№0-9])`,'gi'),
+    (m,pre,w)=>pre+w+nbsp
+  );
+}
+function formatDesc(desc){
+  if(!desc)return desc;
+  return typografRu(desc.replace(/\.\s*$/,''));
+}
+function formatMoney(s){
+  if(!s)return s;
+  if(s==='Бесплатно'||s==='¥0')return s;
+  if(/\([^)]*₽\)/.test(s))return s;
+  const parts=s.split(/\s*·\s*/);
+  if(parts.length!==2)return s;
+  const jpy=parts[0].trim();
+  const rub=parts[1].trim().replace(/\s*₽\s*$/,'').trim();
+  return `${jpy} (${rub}₽)`;
+}
+function formatMoneyPair(jpy,rub){
+  if(!rub)return jpy;
+  const r=rub.replace(/\s*₽\s*$/,'').trim();
+  return `${jpy} (${r}₽)`;
+}
+const NAME_MOB={
+  'Namba Yasaka Shrine':'Namba Yasaka',
+  'Shinsaibashi-suji':'Shinsaibashi',
+  'Nakanoshima Park':'Nakanoshima',
+  'Umeda Sky Building':'Umeda Sky',
+  'Sumiyoshi Taisha':'Sumiyoshi',
+  'Fushimi Inari Taisha':'Fushimi Inari',
+  'Nishiki Market':'Nishiki',
+  'Arashiyama Bamboo':'Arashiyama',
+  'Universal Studios Japan':'Universal Studios',
+  'Chureito Pagoda':'Chureito',
+  'Lake Kawaguchi':'Kawaguchi',
+  'Kachi Kachi Ropeway':'Kachi Ropeway',
+  'Saiko Iyashi-no-Sato Nenba':'Saiko Nenba',
+  'Yasukuni Shrine':'Yasukuni',
+  'Koishikawa Korakuen Garden':'Koishikawa',
+  'Akihabara Electric Town':'Akihabara',
+  'The National Art Center':'Nat. Art Center',
+  'Shibuya Crossing':'Shibuya',
+  'Hachiko Statue':'Hachiko',
+  'Kameido Tenjin Shrine':'Kameido Tenjin',
+  'Tokyo National Museum':'Tokyo Nat. Museum',
+  'Warner Bros. Studio Tour Tokyo':'Warner Bros. Studio',
+  'Tsurugaoka Hachimangu':'Tsurugaoka',
+  'Kotoku-in · Great Buddha':'Great Buddha',
+  'Enoshima Shrine':'Enoshima',
+  'Hamarikyu Gardens':'Hamarikyu',
+  'teamLab Planets TOKYO':'TeamLab Planets',
+  'Mori Art Museum':'Mori Art',
+  'Azabudai Hills':'Azabudai',
+};
+
+const DAY_ROUTE_COLORS=['#111110','#1D4ED8','#047857','#B45309','#6D28D9','#BE185D','#0E7490','#A16207','#B91C1C','#4338CA','#0F766E','#7E22CE','#C2410C','#475569'];
+
+function buildRegionDayRoutes(){
+  const byRegion={};
+  REGIONS.forEach(r=>{byRegion[r.id]=[];});
+  DAYS.forEach((d,i)=>{
+    const rid=DAY_REGION[i];
+    const pts=d.places.filter(p=>p.lat);
+    if(!pts.length)return;
+    byRegion[rid].push({dayIdx:i,tab:d.tab,city:d.city,places:pts});
+  });
+  return byRegion;
+}
+const regionDayRoutes=buildRegionDayRoutes();
+const cityMapState={};
+
+function dayFilterLabel(tab){
+  const m=tab.match(/^(\d{1,2})\s+сент/);
+  return m?`${m[1].padStart(2,'0')}.09`:tab;
+}
+
+function renderDayFilters(regionId){
+  const days=regionDayRoutes[regionId];
+  if(!days.length)return'';
+  return`<div class="map-day-filters" data-region="${regionId}">
+    <label class="map-day-filter map-day-filter--all">
+      <input type="checkbox" class="map-day-cb-all" data-region="${regionId}" checked>
+      Все
+    </label>
+    ${days.map(d=>`
+    <label class="map-day-filter">
+      <input type="checkbox" class="map-day-cb" data-region="${regionId}" data-day="${d.dayIdx}" checked>
+      <span class="map-day-swatch" style="background:${DAY_ROUTE_COLORS[d.dayIdx%DAY_ROUTE_COLORS.length]}"></span>
+      ${dayFilterLabel(d.tab)}
+    </label>`).join('')}
+  </div>`;
+}
+
+function renderCityMap(id,title,count,regionId){
+  const loc=count===1?'место':count<5?'места':'мест';
+  return`<div class="section-label">${count} ${loc}</div>
+    <div class="map-wrap" id="mapwrap-${id}">
+      ${renderDayFilters(regionId)}
+      <div class="map-fs-top">
+        <span class="map-fs-title">${title}</span>
+        <button type="button" class="map-fs-close" id="fsclose-${id}" aria-label="Закрыть карту">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="day-map" id="map-${id}"></div>
+      <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-${id}" aria-label="На весь экран">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
+      </button>
+      <div class="map-actions">
+        <a class="map-btn" id="gmap-${id}" href="#" target="_blank" rel="noopener">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Maps
+        </a>
+      </div>
+    </div>`;
+}
+
+function renderPlaceCard(pl,showNum){
+  const num=showNum&&pl.n?`<div class="place-num">${pl.n}</div>`:'';
+  const nameShort=NAME_MOB[pl.name]||pl.name;
+  return`<div class="place">
+    <div class="place-photo-wrap">
+      <img class="place-photo" src="${pl.img}" alt="${pl.name}" loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="place-photo-err">Изображение недоступно</div>
+      ${num}
+    </div>
+    <div class="place-body">
+      <div class="place-head">
+        <div class="place-titles">
+          ${pl.jp?`<div class="place-jp jp">${pl.jp}</div>`:''}
+          <div class="place-name place-name-full">${pl.name}</div>
+          <div class="place-name place-name-short">${nameShort}</div>
+        </div>
+        <div class="place-desc">${formatDesc(pl.desc)}</div>
+      </div>
+      <div class="place-meta">
+        <span class="place-meta-item">${formatMoney(pl.price)}</span>${pl.hours?`<span class="place-meta-sep" aria-hidden="true"></span><span class="place-meta-item">${pl.hours}</span>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildPlacesCatalog(){
+  const byRegion={};
+  REGIONS.forEach(r=>{byRegion[r.id]=[];});
+  const seen=new Set();
+  DAYS.forEach((d,i)=>{
+    const rid=DAY_REGION[i];
+    d.places.forEach(pl=>{
+      if(seen.has(pl.name))return;
+      seen.add(pl.name);
+      byRegion[rid].push(pl);
+    });
+  });
+  Object.entries(EXTRA_PLACES).forEach(([rid,extras])=>{
+    extras.forEach(pl=>{
+      if(seen.has(pl.name))return;
+      seen.add(pl.name);
+      byRegion[rid].push({...pl,offRoute:true});
+    });
+  });
+  return byRegion;
+}
+
 // ─── BUILD TABS ────────────────────────
 const tabsEl=document.getElementById('tabs');
 const panelsEl=document.getElementById('panels');
+let currentView='route';
+
+const placesCatalog=buildPlacesCatalog();
+const placesPanel=document.createElement('div');
+placesPanel.className='panel';
+placesPanel.id='panel-places';
+placesPanel.innerHTML=`
+  <div class="day-header">
+    <div class="day-index">по городам</div>
+    <div class="day-title"><span class="day-city">Места </span><span class="day-city-jp">スポット</span></div>
+  </div>
+  ${REGIONS.map(r=>{
+    const items=placesCatalog[r.id];
+    if(!items.length)return'';
+    return`<div class="city-section" id="city-${r.id}">
+      <h2 class="city-title">${r.name} <span class="city-title-jp jp">${r.jp}</span></h2>
+      ${renderCityMap('city-'+r.id,r.name,items.length,r.id)}
+      <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
+    </div>`;
+  }).join('')}`;
 
 DAYS.forEach((d,i)=>{
   const t=document.createElement('div');
   t.className='tab'+(i===0?' active':'');
-  t.textContent=d.tab;
-  t.onclick=()=>showDay(i);
+  t.textContent=dayFilterLabel(d.tab);
+  t.onclick=()=>scrollToDay(i);
   tabsEl.appendChild(t);
 });
 const expTab=document.createElement('div');
-expTab.className='tab';
+expTab.className='tab tab-exp';
 expTab.textContent='Расходы';
-expTab.onclick=()=>showDay('exp');
+expTab.onclick=()=>{
+  if(window.matchMedia('(max-width:640px)').matches)setView('expenses');
+  else scrollToDay('exp');
+};
 tabsEl.appendChild(expTab);
 
 // ─── BUILD PANELS ──────────────────────
@@ -715,7 +1264,7 @@ const mapInst={};
 
 DAYS.forEach((d,i)=>{
   const p=document.createElement('div');
-  p.className='panel'+(i===0?' active':'');
+  p.className='panel';
   p.id='panel-'+i;
   const pts=d.places.filter(pl=>pl.lat);
 
@@ -725,37 +1274,18 @@ DAYS.forEach((d,i)=>{
       <div class="transit-body">
         <div class="transit-route">${t.route}</div>
         ${t.detail?`<div class="transit-detail">${t.detail}</div>`:''}
-        ${t.cost?`<div class="transit-cost">${t.cost}</div>`:''}
+        ${t.cost?`<div class="transit-cost">${formatMoney(t.cost)}</div>`:''}
       </div>
     </div>`).join('');
 
-  const placesHtml=d.places.map(pl=>{
-    const free=pl.price==='Бесплатно';
-    return`<div class="place">
-      <div class="place-photo-wrap">
-        <img class="place-photo" src="${pl.img}" alt="${pl.name}" loading="lazy"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="place-photo-err">Изображение недоступно</div>
-        <div class="place-num">${pl.n}</div>
-      </div>
-      <div class="place-body">
-        <div class="place-name">${pl.name}</div>
-        ${pl.jp?`<div class="place-jp jp">${pl.jp}</div>`:''}
-        <div class="place-desc">${pl.desc}</div>
-        <div class="place-meta">
-          <span class="tag ${free?'tag-free':'tag-price'}">${pl.price}</span>
-          ${pl.hours?`<span class="tag tag-hours">${pl.hours}</span>`:''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  const placesHtml=`<div class="places-grid">${d.places.map(pl=>renderPlaceCard(pl,true)).join('')}</div>`;
 
   const b=d.budget||{};
   const budRows=['transport','entry'].filter(k=>b[k]).map(k=>{
     const lbl={transport:'Транспорт',entry:'Билеты'};
-    return`<div class="budget-row"><span class="budget-label">${lbl[k]}</span><span class="budget-val">${b[k]}</span></div>`;
+    return`<div class="budget-row"><span class="budget-label">${lbl[k]}</span><span class="budget-val">${formatMoney(b[k])}</span></div>`;
   }).join('');
-  const budHtml=b.total?`<div class="budget-block"><h3>бюджет дня</h3>${budRows}<div class="budget-row"><span class="budget-label">Итого</span><span class="budget-val">${b.total}</span></div></div>`:'';
+  const budHtml=b.total?`<div class="budget-block"><h3>бюджет дня</h3>${budRows}<div class="budget-row"><span class="budget-label">Итого</span><span class="budget-val">${formatMoney(b.total)}</span></div></div>`:'';
   const noteHtml=d.note?`<div class="day-note">${d.note}</div>`:'';
   const transitBlock=transitHtml?`<div class="section-label">перемещение</div>${transitHtml}`:'';
   const cnt=d.places.length;
@@ -764,9 +1294,7 @@ DAYS.forEach((d,i)=>{
   p.innerHTML=`
     <div class="day-header">
       <div class="day-index">${d.tab}</div>
-      <div class="day-title">${d.city}</div>
-      <div class="day-jp jp">${d.jp}</div>
-      <div class="day-divider"></div>
+      <div class="day-title"><span class="day-city">${d.city} </span><span class="day-city-jp">${d.jp}</span></div>
     </div>
     ${noteHtml}${transitBlock}
     <div class="section-label" style="margin-top:${transitHtml?'20px':'0'}">маршрут · ${cnt} ${loc}</div>
@@ -823,25 +1351,42 @@ expPanel.className='panel';expPanel.id='panel-exp';
 expPanel.innerHTML=`
   <div class="day-header">
     <div class="day-index">17–30 сентября</div>
-    <div class="day-title">Расходы</div>
-    <div class="day-jp jp">費用まとめ</div>
-    <div class="day-divider"></div>
+    <div class="day-title"><span class="day-city">Расходы </span><span class="day-city-jp">費用まとめ</span></div>
   </div>
   ${EXPENSES.map(s=>`
     <div class="exp-section">
       <h3>${s.cat}</h3>
-      ${s.items.map(it=>`<div class="exp-row"><span class="exp-label">${it.name}</span><span class="exp-val">${it.jpy} <span style="font-weight:400;color:var(--text-3);font-style:italic">${it.rub}</span></span></div>`).join('')}
-      <div class="exp-row"><span class="exp-label" style="font-style:normal;font-weight:600;color:var(--text-1)">Итого</span><span class="exp-val">${s.total.jpy} <span style="font-weight:400;color:var(--text-3);font-style:italic">${s.total.rub}</span></span></div>
+      ${s.items.map(it=>`<div class="exp-row"><span class="exp-label">${it.name}</span><span class="exp-val">${formatMoneyPair(it.jpy,it.rub)}</span></div>`).join('')}
+      <div class="exp-row"><span class="exp-label" style="font-style:normal;font-weight:600;color:var(--text-1)">Итого</span><span class="exp-val">${formatMoneyPair(s.total.jpy,s.total.rub)}</span></div>
     </div>`).join('')}
   <div class="exp-total">
     <div class="t-label">без авиабилетов и отелей</div>
     <div class="t-jpy">~¥56,000</div>
-    <div class="t-rub">~25 525 ₽</div>
+    <div class="t-rub">(~25 525₽)</div>
   </div>`;
 panelsEl.appendChild(expPanel);
+panelsEl.appendChild(placesPanel);
 
 // ─── MAP INIT ──────────────────────────
 let fsMapId=null;
+let fsRestore=null;
+
+function ensureMapReady(mapId){
+  if(mapInst[mapId])return;
+  const s=String(mapId);
+  if(/^\d+$/.test(s))initMap(+s);
+  else if(s.startsWith('city-')){
+    const regionId=s.slice(5);
+    const items=placesCatalog[regionId];
+    if(items?.length)initCityMap(regionId,items);
+  }
+}
+
+function resizeMap(mapId){
+  const m=mapInst[mapId];
+  if(!m)return;
+  m.invalidateSize();
+}
 
 function buildGmapsUrl(pts){
   if(!pts||!pts.length)return'#';
@@ -853,89 +1398,343 @@ function buildGmapsUrl(pts){
   return url;
 }
 
-function initMap(i){
-  if(mapInst[i])return;
-  const d=DAYS[i];
-  const pts=d.places.filter(p=>p.lat);
-  const el=document.getElementById('map-'+i);
-  if(!el||!pts.length)return;
+function buildGmapsCenterUrl(pts){
+  if(!pts||!pts.length)return'#';
+  const lat=pts.reduce((s,p)=>s+p.lat,0)/pts.length;
+  const lng=pts.reduce((s,p)=>s+p.lng,0)/pts.length;
+  return`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+function createMap(mapId,pts,{numbered=false,route=false}={}){
+  const el=document.getElementById('map-'+mapId);
+  if(!el||!pts.length)return null;
   const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
   L.control.zoom({position:'topright'}).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
-  if(pts.length>1)L.polyline(pts.map(p=>[p.lat,p.lng]),{color:'#111110',weight:2,opacity:.5,dashArray:'5,5'}).addTo(map);
+  if(route&&pts.length>1)L.polyline(pts.map(p=>[p.lat,p.lng]),{color:'#111110',weight:2,opacity:.5,dashArray:'5,5'}).addTo(map);
   pts.forEach((pl,idx)=>{
     const n=idx+1;
-    const html=`<div class="photo-marker" title="${pl.name}">
+    const badge=numbered?`<div class="badge">${n}</div>`:'';
+    const offCls=pl.offRoute?' photo-marker--off-route':'';
+    const html=`<div class="photo-marker${offCls}" title="${pl.name}">
       <img src="${pl.img}" alt="" loading="lazy"
         onerror="this.style.display='none';this.parentNode.style.background='#888'">
-      <div class="badge">${n}</div>
+      ${badge}
     </div>`;
     const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const offNote=pl.offRoute?'<div class="popup-sub" style="color:#E53935;font-style:normal">не в маршруте</div>':'';
     L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
       <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
-      <div class="popup-name">${n}. ${pl.name}</div>
+      <div class="popup-name">${numbered?n+'. ':''}${pl.name}</div>
       <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
+      ${offNote}
     `);
   });
   if(pts.length===1)map.setView([pts[0].lat,pts[0].lng],14);
   else map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])).pad(0.25));
-  mapInst[i]=map;
   setTimeout(()=>map.invalidateSize(),0);
-  const btn=document.getElementById('gmap-'+i);
-  if(btn)btn.href=buildGmapsUrl(pts);
-  const fsOpen=document.getElementById('fsopen-'+i);
-  const fsClose=document.getElementById('fsclose-'+i);
-  if(fsOpen)fsOpen.onclick=()=>openMapFullscreen(i);
-  if(fsClose)fsClose.onclick=()=>closeMapFullscreen();
+  const gmap=document.getElementById('gmap-'+mapId);
+  if(gmap)gmap.href=route?buildGmapsUrl(pts):buildGmapsCenterUrl(pts);
+  return map;
 }
 
-function openMapFullscreen(i){
-  const wrap=document.getElementById('mapwrap-'+i);
+function initMap(i){
+  if(mapInst[i])return;
+  const pts=DAYS[i].places.filter(p=>p.lat);
+  const map=createMap(i,pts,{numbered:true,route:true});
+  if(map)mapInst[i]=map;
+}
+
+function initCityMap(regionId,places){
+  const mapId='city-'+regionId;
+  if(mapInst[mapId])return;
+  const el=document.getElementById('map-'+mapId);
+  const pts=places.filter(p=>p.lat);
+  if(!el||!pts.length)return;
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+
+  const dayLines={};
+  (regionDayRoutes[regionId]||[]).forEach(dr=>{
+    if(dr.places.length<2)return;
+    const color=DAY_ROUTE_COLORS[dr.dayIdx%DAY_ROUTE_COLORS.length];
+    dayLines[dr.dayIdx]=L.polyline(dr.places.map(p=>[p.lat,p.lng]),{
+      color,weight:2.5,opacity:0.75,dashArray:'6,5',
+    }).addTo(map);
+  });
+
+  pts.forEach(pl=>{
+    const offCls=pl.offRoute?' photo-marker--off-route':'';
+    const html=`<div class="photo-marker${offCls}" title="${pl.name}">
+      <img src="${pl.img}" alt="" loading="lazy"
+        onerror="this.style.display='none';this.parentNode.style.background='#888'">
+    </div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const offNote=pl.offRoute?'<div class="popup-sub" style="color:#E53935;font-style:normal">не в маршруте</div>':'';
+    L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
+      <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+      <div class="popup-name">${pl.name}</div>
+      <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
+      ${offNote}
+    `);
+  });
+
+  if(pts.length===1)map.setView([pts[0].lat,pts[0].lng],14);
+  else map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])).pad(0.22));
+  setTimeout(()=>map.invalidateSize(),0);
+  const gmap=document.getElementById('gmap-'+mapId);
+  if(gmap)gmap.href=buildGmapsCenterUrl(pts);
+  mapInst[mapId]=map;
+  cityMapState[regionId]={map,dayLines};
+  wireDayFilters(regionId);
+}
+
+function wireDayFilters(regionId){
+  const wrap=document.querySelector(`.map-day-filters[data-region="${regionId}"]`);
+  const state=cityMapState[regionId];
+  if(!wrap||!state)return;
+  const allCb=wrap.querySelector('.map-day-cb-all');
+  const dayCbs=[...wrap.querySelectorAll('.map-day-cb')];
+  if(!allCb||!dayCbs.length)return;
+
+  function updateRoutes(){
+    const showAll=allCb.checked;
+    dayCbs.forEach(cb=>{
+      const line=state.dayLines[+cb.dataset.day];
+      if(!line)return;
+      const show=showAll||cb.checked;
+      if(show){
+        if(!state.map.hasLayer(line))line.addTo(state.map);
+      }else{
+        state.map.removeLayer(line);
+      }
+    });
+  }
+
+  allCb.addEventListener('change',()=>{
+    if(allCb.checked)dayCbs.forEach(cb=>{cb.checked=true;});
+    updateRoutes();
+  });
+  dayCbs.forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      if(!cb.checked)allCb.checked=false;
+      else if(dayCbs.every(c=>c.checked))allCb.checked=true;
+      updateRoutes();
+    });
+  });
+}
+
+function initAllCityMaps(){
+  REGIONS.forEach(r=>{
+    const items=placesCatalog[r.id];
+    if(items.length)initCityMap(r.id,items);
+  });
+  setTimeout(()=>{
+    REGIONS.forEach(r=>{
+      const m=mapInst['city-'+r.id];
+      if(m)m.invalidateSize();
+    });
+  },120);
+}
+
+function openMapFullscreen(mapId){
+  const wrap=document.getElementById('mapwrap-'+mapId);
   if(!wrap||fsMapId!==null)return;
-  fsMapId=i;
+  ensureMapReady(mapId);
+  fsMapId=mapId;
+  const placeholder=document.createComment('map-fs-'+mapId);
+  wrap.parentNode.insertBefore(placeholder,wrap.nextSibling);
+  fsRestore={placeholder};
+  document.body.appendChild(wrap);
   wrap.classList.add('map-wrap--fullscreen');
   document.body.classList.add('map-fs-open');
-  setTimeout(()=>{
-    if(mapInst[i]){
-      mapInst[i].scrollWheelZoom.enable();
-      mapInst[i].invalidateSize();
-    }
-  },50);
+  const m=mapInst[mapId];
+  if(m)m.scrollWheelZoom.enable();
+  resizeMap(mapId);
+  requestAnimationFrame(()=>{
+    resizeMap(mapId);
+    setTimeout(()=>resizeMap(mapId),80);
+    setTimeout(()=>resizeMap(mapId),250);
+  });
 }
 
 function closeMapFullscreen(){
   if(fsMapId===null)return;
-  const wrap=document.getElementById('mapwrap-'+fsMapId);
-  if(wrap)wrap.classList.remove('map-wrap--fullscreen');
-  document.body.classList.remove('map-fs-open');
   const id=fsMapId;
-  fsMapId=null;
-  setTimeout(()=>{
-    if(mapInst[id]){
-      mapInst[id].scrollWheelZoom.disable();
-      mapInst[id].invalidateSize();
+  const wrap=document.getElementById('mapwrap-'+id);
+  if(wrap){
+    wrap.classList.remove('map-wrap--fullscreen');
+    const ph=fsRestore?.placeholder;
+    if(ph?.parentNode){
+      ph.parentNode.insertBefore(wrap,ph);
+      ph.remove();
     }
-  },50);
+  }
+  document.body.classList.remove('map-fs-open');
+  fsMapId=null;
+  fsRestore=null;
+  const m=mapInst[id];
+  if(!m)return;
+  m.scrollWheelZoom.disable();
+  requestAnimationFrame(()=>{
+    resizeMap(id);
+    setTimeout(()=>resizeMap(id),50);
+    setTimeout(()=>resizeMap(id),200);
+    setTimeout(()=>resizeMap(id),400);
+  });
 }
+
+document.addEventListener('click',e=>{
+  const openBtn=e.target.closest('.map-btn--fs');
+  if(openBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    openMapFullscreen(openBtn.id.replace('fsopen-',''));
+    return;
+  }
+  if(e.target.closest('.map-fs-close')){
+    e.preventDefault();
+    e.stopPropagation();
+    closeMapFullscreen();
+  }
+});
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&fsMapId!==null)closeMapFullscreen();
+  if(e.key==='Escape'&&document.body.classList.contains('menu-open'))closeMobileMenu();
 });
 
-function showDay(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const pid=typeof id==='number'?'panel-'+id:'panel-exp';
-  document.getElementById(pid).classList.add('active');
-  const tabs=[...document.querySelectorAll('.tab')];
-  const ti=typeof id==='number'?id:DAYS.length;
-  if(tabs[ti])tabs[ti].classList.add('active');
+let scrollLock=false;
+let scrollLockTimer=null;
+let currentActive=0;
+
+function stickyOffset(){
+  const nav=document.querySelector('.view-nav')?.offsetHeight||49;
+  if(currentView!=='route')return nav;
+  const tabs=document.getElementById('day-tabs-wrap')?.offsetHeight||52;
+  return nav+tabs;
+}
+
+function isMobileNav(){return window.matchMedia('(max-width:640px)').matches}
+
+function closeMobileMenu(){
+  document.body.classList.remove('menu-open');
+  const btn=document.getElementById('burger-btn');
+  if(btn)btn.setAttribute('aria-expanded','false');
+}
+
+function openMobileMenu(){
+  document.body.classList.add('menu-open');
+  const btn=document.getElementById('burger-btn');
+  if(btn)btn.setAttribute('aria-expanded','true');
+}
+
+function toggleMobileMenu(){
+  if(document.body.classList.contains('menu-open'))closeMobileMenu();
+  else openMobileMenu();
+}
+
+function setView(mode){
+  currentView=mode;
+  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.add(
+    mode==='places'?'mode-places':mode==='expenses'?'mode-expenses':'mode-route'
+  );
+  const labels={route:'Маршрут',places:'Места',expenses:'Расходы'};
+  document.querySelectorAll('.view-btn,.mobile-menu-item').forEach(b=>{
+    b.classList.toggle('active',b.dataset.view===mode);
+  });
+  const titleEl=document.getElementById('view-nav-title');
+  if(titleEl)titleEl.textContent=labels[mode]||'Маршрут';
+  closeMobileMenu();
+  scrollLock=true;
+  clearTimeout(scrollLockTimer);
   window.scrollTo({top:0,behavior:'smooth'});
-  if(typeof id==='number'){
-    if(fsMapId!==null&&fsMapId!==id)closeMapFullscreen();
-    setTimeout(()=>{initMap(id);if(mapInst[id])mapInst[id].invalidateSize();},80);
+  scrollLockTimer=setTimeout(()=>{scrollLock=false;},600);
+  if(mode==='places')setTimeout(()=>initAllCityMaps(),80);
+  else if(mode==='route'&&!mapInst[0])setTimeout(()=>initMap(0),120);
+}
+
+document.getElementById('burger-btn')?.addEventListener('click',toggleMobileMenu);
+document.querySelectorAll('.mobile-menu-item').forEach(btn=>{
+  btn.onclick=()=>setView(btn.dataset.view);
+});
+document.querySelectorAll('.view-btn').forEach(btn=>{
+  btn.onclick=()=>setView(btn.dataset.view);
+});
+document.addEventListener('click',e=>{
+  if(!isMobileNav()||!document.body.classList.contains('menu-open'))return;
+  if(e.target.closest('.view-nav'))return;
+  closeMobileMenu();
+});
+
+function setActiveTab(index){
+  const tabs=[...document.querySelectorAll('.tab')];
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===index));
+  if(index!==currentActive){
+    currentActive=index;
+    const active=tabs[index];
+    if(active)active.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
   }
 }
+
+function scrollToDay(id){
+  if(id==='exp'&&isMobileNav()){setView('expenses');return}
+  if(currentView!=='route')setView('route');
+  const el=document.getElementById(typeof id==='number'?'panel-'+id:'panel-exp');
+  if(!el)return;
+  scrollLock=true;
+  clearTimeout(scrollLockTimer);
+  const top=el.getBoundingClientRect().top+window.scrollY-stickyOffset();
+  window.scrollTo({top,behavior:'smooth'});
+  const ti=typeof id==='number'?id:DAYS.length;
+  currentActive=-1;
+  setActiveTab(ti);
+  if(typeof id==='number'){
+    if(fsMapId!==null&&fsMapId!==id)closeMapFullscreen();
+    setTimeout(()=>{initMap(id);if(mapInst[id])mapInst[id].invalidateSize();},400);
+  }
+  scrollLockTimer=setTimeout(()=>{scrollLock=false;},900);
+}
+
+function updateActiveFromScroll(){
+  if(scrollLock||fsMapId!==null||currentView!=='route')return;
+  const offset=stickyOffset()+8;
+  const panels=[...document.querySelectorAll('.panel')].filter(p=>{
+    if(p.id==='panel-places')return false;
+    if(p.id==='panel-exp'&&(isMobileNav()||currentView!=='route'))return false;
+    return p.offsetParent!==null;
+  });
+  let active=0;
+  for(let i=0;i<panels.length;i++){
+    if(panels[i].getBoundingClientRect().top<=offset)active=i;
+  }
+  if(active===currentActive)return;
+  setActiveTab(active);
+  if(active<DAYS.length){
+    if(!mapInst[active])initMap(active);
+    else mapInst[active].invalidateSize();
+  }
+}
+
+let scrollRaf=null;
+window.addEventListener('scroll',()=>{
+  if(scrollRaf)return;
+  scrollRaf=requestAnimationFrame(()=>{
+    scrollRaf=null;
+    updateActiveFromScroll();
+  });
+},{passive:true});
+
+const mapObserver=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting)return;
+    const m=e.target.id.match(/^panel-(\d+)$/);
+    if(m)initMap(+m[1]);
+  });
+},{rootMargin:'240px 0px'});
+document.querySelectorAll('.panel[id^="panel-"]:not(#panel-places)').forEach(p=>mapObserver.observe(p));
 
 setTimeout(()=>initMap(0),120);
 </script>
