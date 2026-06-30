@@ -731,6 +731,29 @@ body.map-fs-open{overflow:hidden}
   border-color:#E53935;
   box-shadow:0 0 0 2px rgba(229,57,53,.4),0 2px 8px rgba(0,0,0,.2);
 }
+.stay-marker{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.95);
+  box-shadow:0 2px 8px rgba(0,0,0,.22);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#fff;
+}
+.stay-marker--home{background:#C2410C}
+.stay-marker--apt{background:#6D28D9}
+.photo-marker--home{
+  border-color:#C2410C;
+  box-shadow:0 0 0 2px rgba(194,65,12,.35),0 2px 8px rgba(0,0,0,.2);
+}
+.photo-marker--apt{
+  border-color:#6D28D9;
+  box-shadow:0 0 0 2px rgba(109,40,217,.45),0 2px 8px rgba(0,0,0,.2);
+}
+.popup-link{
+  display:inline-block;margin-top:8px;
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:12px;font-weight:500;color:var(--text-1);
+  text-decoration:underline;
+}
 .map-day-filters{
   position:absolute;top:10px;left:10px;z-index:450;
   background:rgba(255,255,255,.97);
@@ -815,6 +838,7 @@ const P={
   nijo:imgPath('Замок Нидзё.webp'),
   arashiyama:imgPath('Arashiyama Bamboo.jpg'),
   usj:imgPath('Universal Studios Japan.jpg'),
+  katsuoji:imgPath('Katsuoji Temple.jpg'),
   sensoji:imgPath('Senso-ji.jpg'),
   sumida:imgPath('Sumida Park.jpg'),
   nakamise:imgPath('Nakamise.jpg'),
@@ -837,7 +861,7 @@ const P={
   kagurazaka:imgPath('Kagurazaka.jpg'),
   ueno_park:imgPath('Ueno Park.jpg'),
   akihabara:imgPath('Akihabara Electric Town .jpg'),
-  todaiji:W+'2/2f/T%C5%8Ddai-ji_Kon-d%C5%8D.jpg/330px-T%C5%8Ddai-ji_Kon-d%C5%8D.jpg',
+  todaiji:imgPath('Todai-ji.jpg'),
   nara_park:imgPath('Nara Park.jpg'),
   kawaguchi:imgPath('Lake Kawaguchi.jpg'),
   chureito:imgPath('Chureito Pagoda.jpg'),
@@ -858,7 +882,7 @@ const P={
   buddha:imgPath('Kotoku-in · Great Buddha.jpg'),
   engakuji:imgPath('Engaku-ji.jpg'),
   hasedera:imgPath('Hase-dera.jpg'),
-  shinjuku:W+'b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/330px-Skyscrapers_of_Shinjuku_2009_January.jpg',
+  shinjuku:imgPath('Shinjuku.jpg'),
   shinjuku_gyoen:imgPath('Shinjuku Gyoen.jpg'),
 };
 
@@ -939,10 +963,13 @@ const DAYS=[
  budget:{transport:'¥1,420 · 647 ₽',entry:'¥800 · 365 ₽',total:'¥2,220 · 1 012 ₽'}},
 
 {tab:'24 сент',city:'Фудзи → Токио',jp:'東京',mapColor:'#888',
- note:'День переезда в Токио. Заселение и прогулка по Синдзюку вечером.',
+ note:'Приезд в 16:06 на ст. Синдзюку. Заселение в Рёгоку. Вечерняя прогулка по Синдзюку.',
  transit:[{icon:'train',route:'14:08 – 16:06 · Kawaguchiko → Shinjuku',detail:'Fuji-Excursion 32',cost:'¥4,200 · 2 000 ₽'}],
  places:[
-  {n:1,name:'Shinjuku',jp:'新宿',desc:'Заселение, прогулка по вечернему Синдзюку — огни неона, небоскрёбы, парки.',price:'Бесплатно',hours:'',img:P.shinjuku,lat:35.6897,lng:139.7006},
+  {n:1,name:'Shinjuku',jp:'新宿',desc:'Прибытие поездом, короткая прогулка по вечернему Синдзюку — огни неона и небоскрёбы.',price:'Бесплатно',hours:'',img:P.shinjuku,lat:35.6897,lng:139.7006},
+  {n:2,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'Как пойдет',hours:'24/7',img:P.omoide,lat:35.6920,lng:139.7007},
+  {n:3,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.kabukicho,lat:35.6939,lng:139.7023},
+  {n:4,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'Как пойдет',hours:'24/7',img:P.golden_gai,lat:35.6938,lng:139.7039},
  ],
  budget:{transport:'¥4,200 · 2 000 ₽',total:'¥4,200 · 2 000 ₽'}},
 
@@ -1037,7 +1064,40 @@ const REGIONS=[
 ];
 const DAY_REGION=['osaka','osaka','kyoto','nara','osaka','fuji','fuji','tokyo','tokyo','tokyo','tokyo','tokyo','kamakura','tokyo'];
 
+const STAYS={
+  osaka:[{
+    name:'Наш дом',
+    jp:'我が家',
+    kind:'home',
+    address:'Zaimokuchō 2-6, Chuo, 540-0010 Osaka, Japan',
+    lat:34.6798,
+    lng:135.5114,
+  }],
+  fuji:[{
+    name:'Наш дом',
+    jp:'我が家',
+    kind:'home',
+    address:'3647-8 Funatsu, Minamitsuru District, 401-0301 Fujikawaguchiko, Yamanashi, Japan',
+    lat:35.498275,
+    lng:138.770129,
+  }],
+  tokyo:[{
+    name:'Наш дом',
+    jp:'MAT Ryogoku',
+    kind:'home',
+    address:'1-5-7 Ryogoku, Sumida, Tokyo, Japan',
+    lat:35.6948,
+    lng:139.7928,
+    priceRub:36935,
+    dates:'24–30 сент · 6 ночей',
+    link:'https://ru.trip.com/hotels/detail/?cityEnName=Tokyo&cityId=228&hotelId=132844917&checkIn=2026-09-24&checkOut=2026-09-30&adult=2&children=0&crn=1&ages=&curr=RUB&barcurr=RUB',
+  }],
+};
+
 const EXTRA_PLACES={
+  osaka:[
+    {name:'Katsuoji Temple',jp:'勝尾寺',desc:'Храм «победы» в горах Миноо — тысячи красных дарума, сады и вид на осенние клёны',price:'¥500 · 228 ₽',hours:'8:00–17:00',img:P.katsuoji,lat:34.8656,lng:135.4923},
+  ],
   tokyo:[
     {name:'The National Art Center',jp:'国立新美術館',desc:'Футуристичное здание, крупнейшая выставочная площадка Японии',price:'Бесплатно',hours:'10:00–18:00',img:P.national_art,lat:35.6653,lng:139.7263},
     {name:'Shimokitazawa',jp:'下北沢',desc:'Винтажные магазины, бары, более «местный» вайб, чем Сибуя.',price:'Бесплатно',hours:'11:00–22:00',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
@@ -1087,6 +1147,7 @@ const NAME_MOB={
   'Nishiki Market':'Nishiki',
   'Arashiyama Bamboo':'Arashiyama',
   'Universal Studios Japan':'Universal Studios',
+  'Katsuoji Temple':'Katsuoji',
   'Chureito Pagoda':'Chureito',
   'Lake Kawaguchi':'Kawaguchi',
   'Kachi Kachi Ropeway':'Kachi Ropeway',
@@ -1405,7 +1466,53 @@ function buildGmapsCenterUrl(pts){
   return`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 }
 
-function createMap(mapId,pts,{numbered=false,route=false}={}){
+function formatRub(n){
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' ₽';
+}
+
+function getRegionStays(regionId){
+  const s=STAYS[regionId];
+  return s?Array.isArray(s)?s:[s]:[];
+}
+
+function stayPopupHtml(stay){
+  const price=stay.priceRub?`<div class="popup-sub" style="font-style:normal;margin-top:6px">${formatRub(stay.priceRub)} · ${formatRub(stay.priceRub/2)}/чел</div>`:'';
+  const dates=stay.dates?`<div class="popup-sub" style="font-style:normal">${stay.dates}</div>`:'';
+  const link=stay.link?`<a class="popup-link" href="${stay.link}" target="_blank" rel="noopener">Trip.com</a>`:'';
+  const photo=stay.img?`<img class="popup-img" src="${stay.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:'';
+  return`${photo}
+    <div class="popup-name">${stay.name}</div>
+    <div class="popup-sub">${stay.jp||''}</div>
+    <div class="popup-sub" style="font-style:normal;margin-top:6px;line-height:1.35">${stay.address}</div>
+    ${dates}${price}${link}`;
+}
+
+function fitMapToPoints(map,pts,regionId,padding=0.25){
+  const coords=pts.filter(p=>p.lat).map(p=>[p.lat,p.lng]);
+  getRegionStays(regionId).forEach(stay=>coords.push([stay.lat,stay.lng]));
+  if(!coords.length)return;
+  if(coords.length===1)map.setView(coords[0],14);
+  else map.fitBounds(L.latLngBounds(coords).pad(padding));
+}
+
+function addStayMarkers(map,regionId){
+  getRegionStays(regionId).forEach(stay=>{
+    const kind=stay.kind==='apt'?'apt':'home';
+    const fallback=kind==='apt'?'#6D28D9':'#C2410C';
+    const html=stay.img
+      ?`<div class="photo-marker photo-marker--${kind}" title="${stay.name}">
+          <img src="${stay.img}" alt="" loading="lazy"
+            onerror="this.style.display='none';this.parentNode.style.background='${fallback}'">
+        </div>`
+      :`<div class="stay-marker stay-marker--${kind}" title="${stay.name}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"/><path d="M9 21V12h6v9"/></svg>
+        </div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    L.marker([stay.lat,stay.lng],{icon}).addTo(map).bindPopup(stayPopupHtml(stay));
+  });
+}
+
+function createMap(mapId,pts,{numbered=false,route=false,regionId=null}={}){
   const el=document.getElementById('map-'+mapId);
   if(!el||!pts.length)return null;
   const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
@@ -1430,8 +1537,8 @@ function createMap(mapId,pts,{numbered=false,route=false}={}){
       ${offNote}
     `);
   });
-  if(pts.length===1)map.setView([pts[0].lat,pts[0].lng],14);
-  else map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])).pad(0.25));
+  addStayMarkers(map,regionId);
+  fitMapToPoints(map,pts,regionId,0.25);
   setTimeout(()=>map.invalidateSize(),0);
   const gmap=document.getElementById('gmap-'+mapId);
   if(gmap)gmap.href=route?buildGmapsUrl(pts):buildGmapsCenterUrl(pts);
@@ -1441,7 +1548,7 @@ function createMap(mapId,pts,{numbered=false,route=false}={}){
 function initMap(i){
   if(mapInst[i])return;
   const pts=DAYS[i].places.filter(p=>p.lat);
-  const map=createMap(i,pts,{numbered:true,route:true});
+  const map=createMap(i,pts,{numbered:true,route:true,regionId:DAY_REGION[i]});
   if(map)mapInst[i]=map;
 }
 
@@ -1480,8 +1587,8 @@ function initCityMap(regionId,places){
     `);
   });
 
-  if(pts.length===1)map.setView([pts[0].lat,pts[0].lng],14);
-  else map.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])).pad(0.22));
+  addStayMarkers(map,regionId);
+  fitMapToPoints(map,pts,regionId,0.22);
   setTimeout(()=>map.invalidateSize(),0);
   const gmap=document.getElementById('gmap-'+mapId);
   if(gmap)gmap.href=buildGmapsCenterUrl(pts);
