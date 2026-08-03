@@ -258,6 +258,31 @@ body.mode-places #panel-places{display:flex}
   max-width:calc(100vw - var(--viewport-pad));
 }
 #panel-places .city-section .map-wrap{margin-bottom:24px}
+.places-subnav{
+  display:flex;gap:4px;margin-bottom:28px;
+}
+.places-subtab{
+  padding:7px 14px;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:11.5px;font-weight:400;
+  color:var(--text-3);
+  cursor:pointer;
+  border-radius:20px;
+  border:1px solid transparent;
+  background:transparent;
+  transition:all .15s ease;
+  letter-spacing:-0.3px;
+}
+.places-subtab.active{
+  color:#fff;font-weight:600;
+  background:var(--text-1);
+  border-color:var(--text-1);
+}
+.places-subtab:hover:not(.active){color:var(--text-1);background:var(--surface-dim)}
+.places-view{display:none;width:100%;max-width:none}
+.places-view--active{display:block}
+#places-cities.places-view--active{display:contents}
+#places-shops.places-view--active{display:contents}
 .city-title{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size:28px;font-weight:700;
@@ -425,6 +450,12 @@ body.map-fs-open{overflow:hidden}
   color:var(--text-2);margin-top:5px;
   letter-spacing:.01em;
 }
+.transit-link{
+  display:inline-block;margin-top:6px;
+  font-family:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:12px;font-weight:500;color:var(--text-1);
+  text-decoration:underline;
+}
 
 /* ─── PLACE CARD ─── */
 .places-grid{
@@ -464,6 +495,14 @@ body.map-fs-open{overflow:hidden}
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size:13px;color:var(--text-3);
 }
+.place-photo-placeholder{
+  width:100%;height:100%;
+  background:var(--surface-dim);
+}
+.place-photo-wrap--link{
+  display:block;text-decoration:none;color:inherit;
+}
+.place-meta-link{text-decoration:underline}
 .place-num{
   position:absolute;top:14px;left:14px;
   width:28px;height:28px;
@@ -633,6 +672,11 @@ body.map-fs-open{overflow:hidden}
   font-size:15px;font-weight:500;color:var(--text-1);
   margin-bottom:14px;
 }
+.exp-note{
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:12px;color:var(--text-3);
+  margin:-8px 0 12px;line-height:1.45;
+}
 .exp-row{
   display:flex;justify-content:space-between;
   padding:8px 0;border-bottom:1px solid var(--border);
@@ -660,14 +704,10 @@ body.map-fs-open{overflow:hidden}
   font-size:10px;font-weight:300;font-style:italic;
   opacity:.5;margin-bottom:12px;letter-spacing:.06em;
 }
-.exp-total .t-jpy{
+.exp-total .t-sum{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:52px;font-weight:400;
-  letter-spacing:-.03em;line-height:1;
-}
-.exp-total .t-rub{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size:14px;opacity:.5;margin-top:8px;font-style:italic;
+  font-size:clamp(22px,4vw,34px);font-weight:400;
+  letter-spacing:-.02em;line-height:1.35;
 }
 
 /* ─── LEAFLET ─── */
@@ -873,6 +913,7 @@ const P={
   imperial:imgPath('Imperial Palace.jpg'),
   yasukuni:imgPath('Yasukuni Shrine.jpg'),
   koishikawa:imgPath('Koishikawa Korakuen Garden.jpg'),
+  hamarikyu:imgPath('Hamarikyu Gardens.jpg'),
   enoshima:imgPath('Enoshima Shrine.jpg'),
   kameido:imgPath('Kameido Tenjin Shrine.jpg'),
   skytree:imgPath('Tokyo Skytree.jpg'),
@@ -886,10 +927,22 @@ const P={
   shinjuku_gyoen:imgPath('Shinjuku Gyoen.jpg'),
 };
 
+const TICKET_LINKS={
+  osaka_mishima:'https://ru.trip.com/trains/asia/list?departurecityid=219&departurecountrycode=JP&arrivalcountrycode=JP&tripTab=train&biztype=JP&departdate=2026-09-22&departurecitycode=JP04472&arrivalcitycode=JP02335&departurecity=%D0%9E%D1%81%D0%B0%D0%BA%D0%B0+%28%D0%B2%D1%81%D0%B5%29&arrivalcity=%D0%9C%D0%B8%D1%81%D0%B8%D0%BC%D0%B0',
+  mishima_kawaguchiko:'https://bus.fujikyu.co.jp/highwaybus/route/mishima-kawaguchiko/',
+  kawaguchiko_shinjuku:'https://www.jreast.co.jp/multi/en/pass/fuji-excursion.html',
+  tokyo_kamakura:'https://ru.trip.com/trains/asia/list?departurecountrycode=JP&arrivalcountrycode=JP&tripTab=train&biztype=JP&departdate=2026-09-29&departurecitycode=JP04604&arrivalcitycode=JP04631&departurecity=Tokyo&arrivalcity=Kamakura',
+  enoshima_tokyo:'https://ru.trip.com/trains/asia/list?departurecountrycode=JP&arrivalcountrycode=JP&tripTab=train&biztype=JP&departdate=2026-09-29&departurecitycode=JP04628&arrivalcitycode=JP04604&departurecity=Enoshima&arrivalcity=Tokyo',
+};
+
 const DAYS=[
 {tab:'17 сент',city:'Осака',jp:'大阪',mapColor:'#888',
  note:'Прилёт в 12:40 — лёгкий день, гуляем вечером',
- transit:[{icon:'plane',route:'Прилёт · Аэропорт Кансай',detail:'Регистрация, заселение в отель',cost:''}],
+ transit:[
+  {icon:'plane',route:'Прилёт · Аэропорт Кансай',detail:'12:40 · регистрация, заселение',cost:''},
+  {icon:'train',route:'Кансай → Осака',detail:'IC-карта',cost:'¥1,200–1,900'},
+  {icon:'metro',route:'Осака, местные (17–18 сент)',detail:'IC-карта',cost:'¥1,500–2,500'},
+ ],
  places:[
   {n:1,name:'Namba Yasaka Shrine',jp:'難波八阪神社',desc:'Огромная голова льва-алтарь — самая фотогеничная святыня Осаки.',price:'Бесплатно',hours:'24/7',img:P.namba_yasaka,lat:34.6566,lng:135.5009},
   {n:2,name:'Dotonbori',jp:'道頓堀',desc:'Главная гастро-улица Осаки: такояки, рамен, огромная вывеска Glico над каналом.',price:'Бесплатно',hours:'24/7',img:P.dotonbori,lat:34.6687,lng:135.5012},
@@ -911,7 +964,7 @@ const DAYS=[
  budget:{transport:'¥500 · 228 ₽',entry:'¥2,100 · 957 ₽',total:'¥2,600 · 1 185 ₽'}},
 
 {tab:'19 сент',city:'Киото',jp:'京都',mapColor:'#888',
- transit:[{icon:'train',route:'Осака → Киото',detail:'JR Токкю, 15 мин',cost:'JR Pass'}],
+ transit:[{icon:'train',route:'Осака → Киото',detail:'JR Токкю, 15 мин · отдельный билет (или IC, если обычный JR)',cost:'¥1,420–2,810 · билет'}],
  places:[
   {n:1,name:'To-ji',jp:'東寺',desc:'Пятиярусная пагода 54 м — самая высокая деревянная пагода в Японии.',price:'¥500 · 228 ₽',hours:'8:00–17:00',img:P.toji,lat:34.9800,lng:135.7476},
   {n:2,name:'Tofuku-ji',jp:'東福寺',desc:'Один из важнейших дзэн-храмов Киото с грандиозными воротами санмон.',price:'Бесплатно',hours:'9:00–16:00',img:P.tofukuji,lat:34.9716,lng:135.7757},
@@ -923,28 +976,28 @@ const DAYS=[
   {n:8,name:'Nijo Castle',jp:'二条城',desc:'Резиденция сёгунов Токугава с садами и «соловьиными» полами.',price:'¥1,000 · 456 ₽',hours:'8:45–17:00',img:P.nijo,lat:35.0142,lng:135.7480},
   {n:9,name:'Arashiyama Bamboo',jp:'嵐山竹林',desc:'Бамбуковый лес Сагано — высокие стебли, звенящие на ветру.',price:'Бесплатно',hours:'24/7',img:P.arashiyama,lat:35.0094,lng:135.6727},
  ],
- budget:{transport:'¥0',entry:'¥2,000 · 912 ₽',total:'¥2,000 · 912 ₽'}},
+ budget:{transport:'¥1,420–2,810',entry:'¥2,000 · 912 ₽',total:'¥3,420–4,810 · 912 ₽'}},
 
 {tab:'20 сент',city:'Нара',jp:'奈良',mapColor:'#888',
- transit:[{icon:'train',route:'Осака → Нара',detail:'JR Ямато-дзи, 35 мин',cost:'JR Pass'}],
+ transit:[{icon:'train',route:'Осака → Нара',detail:'JR Ямато-дзи, 35 мин · IC-карта',cost:'¥490 · IC'}],
  places:[
   {n:1,name:'Todai-ji',jp:'東大寺',desc:'Храм Великого Будды — крупнейшее деревянное здание в мире. Статуя 15 м.',price:'¥600 · 273 ₽',hours:'7:30–17:30',img:P.todaiji,lat:34.6888,lng:135.8399},
   {n:2,name:'Nara Park',jp:'奈良公園',desc:'Более 1000 вольных оленей — священных животных. Гуляют прямо среди людей.',price:'Бесплатно',hours:'24/7',img:P.nara_park,lat:34.6851,lng:135.8330},
  ],
- budget:{transport:'¥700 · 319 ₽',entry:'¥600 · 273 ₽',total:'¥1,300 · 593 ₽'}},
+ budget:{transport:'¥490',entry:'¥600 · 273 ₽',total:'¥1,090 · 273 ₽'}},
 
 {tab:'21 сент',city:'Осака · USJ',jp:'大阪',mapColor:'#888',
  note:'Очереди на топ-аттракционы до 90–180 мин. Express Pass сэкономит время.',
- transit:[{icon:'train',route:'→ JR Sakurajima',detail:'5 мин от Осаки до ворот USJ',cost:'JR Pass'}],
+ transit:[{icon:'train',route:'→ JR Sakurajima',detail:'5 мин до ворот USJ · IC-карта',cost:'¥180 · IC'}],
  places:[
-  {n:1,name:'Universal Studios Japan',jp:'ユニバーサル・スタジオ・ジャパン',desc:'Super Nintendo World, Гарри Поттер, Миньоны — полный день приключений.',price:'¥8,600–11,800 · 3 920–5 378 ₽',hours:'9:00–22:00',img:P.usj,lat:34.6654,lng:135.4324},
+  {n:1,name:'Universal Studios Japan',jp:'ユニバーサル・スタジオ・ジャパン',desc:'Super Nintendo World, Гарри Поттер, Миньоны — полный день приключений.',price:'¥8,600 · 5 720 ₽',hours:'9:00–22:00',img:P.usj,lat:34.6654,lng:135.4324},
  ],
- budget:{transport:'¥0',entry:'¥8,600 · 3 920 ₽',total:'¥8,600 · 3 920 ₽'}},
+ budget:{transport:'¥180',entry:'¥8,600 · 5 720 ₽',total:'¥8,780 · 5 900 ₽'}},
 
 {tab:'22 сент',city:'Фудзи · Кавагутико',jp:'富士山',mapColor:'#888',
  transit:[
-  {icon:'train',route:'7:36 Shin-Osaka → Mishima',detail:'Синкансэн, 2 ч 21 мин',cost:'¥9,600 · 4 376 ₽'},
-  {icon:'bus',route:'10:20 Mishima → Kawaguchiko',detail:'Автобус Fuji Kyuko, 1 ч 30 мин',cost:'¥2,500 · 1 140 ₽'},
+  {icon:'train',route:'7:36 Shin-Osaka → Mishima',detail:'Синкансэн, 2 ч 21 мин · отдельный билет',cost:'~¥13,000–15,000 · билет',link:TICKET_LINKS.osaka_mishima,linkLabel:'Trip.com'},
+  {icon:'bus',route:'10:20 Mishima → Kawaguchiko',detail:'Fuji Kyuko, 1 ч 30 мин · IC-карта* · иногда только наличные',cost:'¥2,500 · IC',link:TICKET_LINKS.mishima_kawaguchiko,linkLabel:'Fuji Kyuko'},
  ],
  places:[
   {n:1,name:'Chureito Pagoda',jp:'忠霊塔',desc:'Пятиярусная пагода с классическим видом на Фудзи — открыточный кадр Японии.',price:'Бесплатно',hours:'24/7',img:P.chureito,lat:35.4920,lng:138.7940},
@@ -952,77 +1005,84 @@ const DAYS=[
   {n:3,name:'Kachi Kachi Ropeway',jp:'かちかち山ロープウェイ',desc:'Канатная дорога на гору Тэнтяку — лучший вид на Фудзи и озеро сверху.',price:'¥1,000 · 456 ₽',hours:'8:30–17:00',img:P.kachi_kachi,lat:35.5110,lng:138.7697},
   {n:4,name:'Oishi Park',jp:'大石公園',desc:'Парк цветов на северном берегу озера Кавагути с панорамой на Фудзи.',price:'Бесплатно',hours:'24/7',img:P.oishi,lat:35.5121,lng:138.8018},
  ],
- budget:{transport:'¥2,500 · 1 140 ₽',entry:'¥1,000 · 456 ₽',total:'¥3,500 · 1 595 ₽'}},
+ budget:{transport:'~¥15,500–17,500',entry:'¥1,000 · 456 ₽',total:'~¥16,500–18,500 · 456 ₽'}},
 
 {tab:'23 сент',city:'Фудзи · Сайко',jp:'富士山',mapColor:'#888',
- transit:[{icon:'bus',route:'Green Line от Kawaguchiko',detail:'До Saiko Iyashi-no-Sato, 40 мин',cost:'¥710 · 324 ₽'}],
+ transit:[{icon:'bus',route:'Green Line от Kawaguchiko',detail:'До Saiko Iyashi-no-Sato, 40 мин · IC-карта',cost:'¥710 · IC'}],
  places:[
   {n:1,name:'Saiko Iyashi-no-Sato Nenba',jp:'西湖いやしの里根場',desc:'Восстановленная деревня эпохи Мэйдзи у подножия Фудзи — соломенные крыши.',price:'¥500 · 228 ₽',hours:'9:30–16:30',img:P.saiko,lat:35.5042,lng:138.6453},
   {n:2,name:'Oshino Hakkai',jp:'忍野八海',desc:'Восемь кристальных родниковых прудов у подножия Фудзи. Вода прозрачная до дна.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.oshino,lat:35.4638,lng:138.8408},
  ],
- budget:{transport:'¥1,420 · 647 ₽',entry:'¥800 · 365 ₽',total:'¥2,220 · 1 012 ₽'}},
+ budget:{transport:'¥710',entry:'¥800 · 365 ₽',total:'¥1,510 · 365 ₽'}},
 
-{tab:'24 сент',city:'Фудзи → Токио',jp:'東京',mapColor:'#888',
- note:'Приезд в 16:06 на ст. Синдзюку. Заселение в Рёгоку. Вечерняя прогулка по Синдзюку.',
- transit:[{icon:'train',route:'14:08 – 16:06 · Kawaguchiko → Shinjuku',detail:'Fuji-Excursion 32',cost:'¥4,200 · 2 000 ₽'}],
+{tab:'24 сент',city:'Фудзи → Токио · заезд',jp:'東京',mapColor:'#888',
+ note:'Приезд в 16:06 на ст. Синдзюку. Заселение в Рёгоку. Gyoen — если успеем до 18:00, дальше вечерний Синдзюку.',
+ transit:[{icon:'train',route:'14:08 – 16:06 · Kawaguchiko → Shinjuku',detail:'Fuji-Excursion 32 · отдельный билет, 2 чел.',cost:'¥4,200 · билет',link:TICKET_LINKS.kawaguchiko_shinjuku,linkLabel:'JR East'}],
  places:[
-  {n:1,name:'Shinjuku',jp:'新宿',desc:'Прибытие поездом, короткая прогулка по вечернему Синдзюку — огни неона и небоскрёбы.',price:'Бесплатно',hours:'',img:P.shinjuku,lat:35.6897,lng:139.7006},
-  {n:2,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'Как пойдет',hours:'24/7',img:P.omoide,lat:35.6920,lng:139.7007},
-  {n:3,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.kabukicho,lat:35.6939,lng:139.7023},
-  {n:4,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'Как пойдет',hours:'24/7',img:P.golden_gai,lat:35.6938,lng:139.7039},
+  {n:1,name:'Shinjuku Gyoen',jp:'新宿御苑',desc:'Государственный сад 65 га: 450 сортов сакуры, лужайки, японская и французская зоны.',price:'¥500 · 228 ₽',hours:'9:00–18:00',img:P.shinjuku_gyoen,lat:35.6850,lng:139.7100},
+  {n:2,name:'Shinjuku',jp:'新宿',desc:'Прибытие поездом, короткая прогулка по вечернему Синдзюку — огни неона и небоскрёбы.',price:'Бесплатно',hours:'24/7',img:P.shinjuku,lat:35.6897,lng:139.7006},
+  {n:3,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'Как пойдет',hours:'24/7',img:P.omoide,lat:35.6920,lng:139.7007},
+  {n:4,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.kabukicho,lat:35.6939,lng:139.7023},
+  {n:5,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'Как пойдет',hours:'24/7',img:P.golden_gai,lat:35.6938,lng:139.7039},
  ],
- budget:{transport:'¥4,200 · 2 000 ₽',total:'¥4,200 · 2 000 ₽'}},
+ budget:{transport:'¥4,200',entry:'¥500 · 228 ₽',total:'¥4,700 · 228 ₽'}},
 
-{tab:'25 сент',city:'Токио · Центр',jp:'東京',mapColor:'#888',
- transit:[{icon:'metro',route:'Метро Тиёда / Гиндза',detail:'Akasaka-Mitsuke → Акихабара',cost:'¥300–500 · 137–228 ₽'}],
+{tab:'25 сент',city:'Токио · Асакуса / Уэно',jp:'東京',mapColor:'#888',
+ note:'Вечер как день шопинга',
+ transit:[{icon:'metro',route:'Метро Хандзомон / Тобу / Гиндза',detail:'Рёгоку → Kameido / Асакуса / Уэно · IC-карта',cost:'¥1,000–1,500 · IC'}],
+ places:[
+  {n:1,name:'Kameido Tenjin Shrine',jp:'亀戸天神社',desc:'Живописный синтоистский храм с деревянными мостами над прудами с кувшинками.',price:'Бесплатно',hours:'6:00–17:00',img:P.kameido,lat:35.6955,lng:139.8241},
+  {n:2,name:'Tokyo Skytree',jp:'東京スカイツリー',desc:'Самая высокая башня в мире (634 м). Смотровые на 350 и 450 м.',price:'¥3,000 · 1 367 ₽',hours:'10:00–21:00',img:P.skytree,lat:35.7101,lng:139.8107},
+  {n:3,name:'Sumida Park',jp:'隅田公園',desc:'Парк вдоль реки Сумида с видом на Скайтри — лучшее место для фото башни.',price:'Бесплатно',hours:'24/7',img:P.sumida,lat:35.7123,lng:139.7995},
+  {n:4,name:'Nakamise',jp:'仲見世通り',desc:'Торговая улица к воротам Камонаримон: сувениры, снэки, традиционные сладости.',price:'Бесплатно',hours:'10:00–19:00',img:P.nakamise,lat:35.7139,lng:139.7972},
+  {n:5,name:'Senso-ji',jp:'浅草寺',desc:'Древнейший и самый известный буддийский храм Токио.',price:'Бесплатно',hours:'6:00–17:00',img:P.sensoji,lat:35.7148,lng:139.7967},
+  {n:6,name:'Tokyo National Museum',jp:'東京国立博物館',desc:'Художественное собрание Японии — самурайское оружие, живопись, керамика',price:'¥1,000 · 456 ₽',hours:'9:30–17:00',img:P.tnm,lat:35.7189,lng:139.7762},
+  {n:7,name:'Ueno Park',jp:'上野恩賜公園',desc:'Один из самых известных городских парков Токио',price:'Бесплатно',hours:'24/7',img:P.ueno_park,lat:35.7148,lng:139.7734},
+ ],
+ budget:{transport:'¥1,000–1,500',entry:'¥4,000 · 1 823 ₽',total:'¥5,000–5,500 · 1 823 ₽'}},
+
+{tab:'26 сент',city:'Токио · Центр',jp:'東京',mapColor:'#888',
+ transit:[{icon:'metro',route:'Метро Тиёда / Гиндза / Сэндагай',detail:'Центр → Янака → Акихабара · IC-карта',cost:'¥1,000–1,500 · IC'}],
  places:[
   {n:1,name:'Hie Shrine',jp:'日枝神社',desc:'Красивейшая синтоистская святыня в центре Токио с туннелями из тории.',price:'Бесплатно',hours:'6:00–17:00',img:P.hie,lat:35.6727,lng:139.7411},
   {n:2,name:'Imperial Palace',jp:'皇居',desc:'Главный дворец Японии с садами Хигаси-Гёэн и знаменитым мостом Нидзюубаси.',price:'Бесплатно',hours:'9:00–16:30',img:P.imperial,lat:35.6852,lng:139.7528},
   {n:3,name:'Yasukuni Shrine',jp:'靖国神社',desc:'Значимое синтоистское святилище с музеем Юсукан о военной истории Японии.',price:'Бесплатно',hours:'6:00–18:00',img:P.yasukuni,lat:35.6938,lng:139.7436},
   {n:4,name:'Kagurazaka',jp:'神楽坂',desc:'Исторический район в восточной части Синдзюку — узкие мощёные переулки',price:'Бесплатно',hours:'24/7',img:P.kagurazaka,lat:35.7008,lng:139.7376},
   {n:5,name:'Koishikawa Korakuen Garden',jp:'小石川後楽園',desc:'Один из красивейших традиционных садов Токио эпохи Эдо (XVII в.).',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.koishikawa,lat:35.7070,lng:139.7486},
-  {n:6,name:'Akihabara Electric Town',jp:'秋葉原電気街',desc:'Электроника, аниме, ретро-игры, мэйд-кафе — центр японской поп-культуры.',price:'Бесплатно',hours:'10:00–21:00',img:P.akihabara,lat:35.7023,lng:139.7745},
- ],
- budget:{transport:'¥500 · 228 ₽',entry:'¥300 · 137 ₽',total:'¥800 · 365 ₽'}},
-
-{tab:'26 сент',city:'Токио · Сибуя',jp:'東京',mapColor:'#888',
- transit:[{icon:'metro',route:'JR Яматэ / метро Гиндза',detail:'Сибуя ↔ Синдзюку',cost:'¥200–300 · 91–137 ₽'}],
- places:[
-  {n:1,name:'Shibuya Crossing',jp:'渋谷スクランブル',desc:'Самый загруженный перекрёсток мира — тысячи людей переходят одновременно.',price:'Бесплатно',hours:'24/7',img:P.shibuya,lat:35.6595,lng:139.7004},
-  {n:2,name:'Shibuya Sky',jp:'渋谷スカイ',desc:'Смотровая на крыше Shibuya Scramble Square — 360° вид на весь Токио.',price:'¥3,000 · 1 367 ₽',hours:'10:00–22:30',img:P.shibuya_sky,lat:35.6580,lng:139.7025},
-  {n:3,name:'Hachiko Statue',jp:'ハチ公像',desc:'Бронзовая статуя верного пса — главная точка встречи у станции Сибуя.',price:'Бесплатно',hours:'24/7',img:P.hachiko,lat:35.6591,lng:139.7006},
-  {n:4,name:'Meiji Shrine',jp:'明治神宮',desc:'Главная святыня Токио в лесу из 120 000 деревьев.',price:'Бесплатно',hours:'Рассвет–закат',img:P.meiji,lat:35.6764,lng:139.6993},
-  {n:5,name:'Golden Gai',jp:'ゴールデン街',desc:'Лабиринт крошечных баров в Синдзюку — ретро-атмосфера 70-х, 200+ заведений.',price:'Как пойдет',hours:'24/7',img:P.golden_gai,lat:35.6938,lng:139.7039},
-  {n:6,name:'Omoide Yokocho',jp:'思い出横丁',desc:'«Переулок воспоминаний» — узкие рядки с якитори и сакэ у ст. Синдзюку.',price:'Как пойдет',hours:'24/7',img:P.omoide,lat:35.6920,lng:139.7007},
-  {n:7,name:'Kabukicho',jp:'歌舞伎町',desc:'Главный развлекательный район Токио: неон, бары, клубы, Godzilla Hotel.',price:'Бесплатно',hours:'24/7',img:P.kabukicho,lat:35.6939,lng:139.7023},
- ],
- budget:{transport:'¥500 · 228 ₽',entry:'¥3,000 · 1 367 ₽',total:'¥3,500 · 1 595 ₽'}},
-
-{tab:'27 сент',city:'Токио · Асакуса',jp:'東京',mapColor:'#888',
- transit:[{icon:'metro',route:'Метро Хандзомон / Тобу',detail:'Kinshichō → Асакуса',cost:'¥200–300 · 91–137 ₽'}],
- places:[
-  {n:1,name:'Kameido Tenjin Shrine',jp:'亀戸天神社',desc:'Живописный синтоистский храм с деревянными мостами над прудами с кувшинками.',price:'Бесплатно',hours:'6:00–17:00',img:P.kameido,lat:35.6955,lng:139.8241},
-  {n:2,name:'Tokyo Skytree',jp:'東京スカイツリー',desc:'Самая высокая башня в мире (634 м). Смотровые на 350 и 450 м.',price:'¥3,000 · 1 367 ₽',hours:'10:00–21:00',img:P.skytree,lat:35.7101,lng:139.8107},
-  {n:3,name:'Sumida Park',jp:'隅田公園',desc:'Парк вдоль реки Сумида с видом на Скайтри — лучшее место для фото башни.',price:'Бесплатно',hours:'24/7',img:P.sumida,lat:35.7123,lng:139.7995},
-  {n:4,name:'Senso-ji',jp:'浅草寺',desc:'Древнейший и самый известный буддийский храм Токио.',price:'Бесплатно',hours:'6:00–17:00',img:P.sensoji,lat:35.7148,lng:139.7967},
-  {n:5,name:'Nakamise',jp:'仲見世通り',desc:'Торговая улица к воротам Камонаримон: сувениры, снэки, традиционные сладости.',price:'Бесплатно',hours:'10:00–19:00',img:P.nakamise,lat:35.7139,lng:139.7972},
-  {n:6,name:'Tokyo National Museum',jp:'東京国立博物館',desc:'Художественное собрание Японии — самурайское оружие, живопись, керамика',price:'¥1,000 · 456 ₽',hours:'9:30–17:00',img:P.tnm,lat:35.7189,lng:139.7762},
+  {n:6,name:'Nezu Shrine',jp:'根津神社',desc:'Один из старейших синтоистских храмов Токио, район Бункё',price:'Бесплатно',hours:'6:00–18:00',img:P.nezu,lat:35.7202,lng:139.7628},
   {n:7,name:'Yanaka Ginza',jp:'谷中銀座',desc:'Традиционная торговая улочка 1950-х — настоящий старый Токио без реноваций.',price:'Бесплатно',hours:'10:00–18:00',img:P.yanaka,lat:35.7272,lng:139.7700},
+  {n:8,name:'Akihabara Electric Town',jp:'秋葉原電気街',desc:'Электроника, аниме, ретро-игры, мэйд-кафе — центр японской поп-культуры.',price:'Бесплатно',hours:'10:00–21:00',img:P.akihabara,lat:35.7023,lng:139.7745},
  ],
- budget:{transport:'¥500 · 228 ₽',entry:'¥4,000 · 1 823 ₽',total:'¥4,500 · 2 051 ₽'}},
+ budget:{transport:'¥1,000–1,500',entry:'¥300 · 137 ₽',total:'¥1,300–1,800 · 137 ₽'}},
 
-{tab:'28 сент',city:'Гарри Поттер',jp:'東京',mapColor:'#888',
- note:'Билеты бронировать заранее — разбирают за несколько недель.',
- transit:[{icon:'metro',route:'Метро → ст. Тосимаэн',detail:'Одо линия, ~40 мин от центра',cost:'¥300–400 · 137–182 ₽'}],
+{tab:'27 сент',city:'Токио · Тойосу / Роппонги / Сибуя',jp:'東京',mapColor:'#888',
+ transit:[{icon:'metro',route:'Метро / JR',detail:'Тойосу → Хамарикю → Роппонги → Сибуя · IC-карта',cost:'¥1,500–2,000 · IC'}],
  places:[
-  {n:1,name:'Warner Bros. Studio Tour Tokyo',jp:'ワーナー ブラザース スタジオツアー東京',desc:'Реальные декорации Гарри Поттера: Хогвартс, Косой переулок, Косяк № 9¾',price:'¥6,500 · (2 963 ₽)',hours:'',img:P.wb_studio,lat:35.7396,lng:139.6623},
+  {n:1,name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',desc:'Иммерсивное цифровое искусство в Тойосу — очень популярно',price:'¥3,800 · 1 733 ₽',hours:'8:30–22:00',img:P.teamlab,lat:35.6491,lng:139.7917},
+  {n:2,name:'Hamarikyu Gardens',jp:'浜離宮恩賜庭園',desc:'Традиционный сад с чайным домиком прямо у Токийского залива и небоскрёбов Одайбы.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.hamarikyu,lat:35.6600,lng:139.7631},
+  {n:3,name:'Azabudai Hills',jp:'麻布台ヒルズ',desc:'Крупный многофункциональный городской комплекс',price:'Бесплатно',hours:'24/7',img:P.azabudai,lat:35.6614,lng:139.7410},
+  {n:4,name:'The National Art Center',jp:'国立新美術館',desc:'Футуристичное здание, крупнейшая выставочная площадка Японии',price:'Бесплатно',hours:'10:00–18:00',img:P.national_art,lat:35.6653,lng:139.7263},
+  {n:5,name:'Mori Art Museum',jp:'森美術館',desc:'Один из ведущих музеев современного искусства — Roppongi Hills, 53 этаж',price:'¥1,800 · 821 ₽',hours:'10:00–22:00',img:P.mori_art,lat:35.6605,lng:139.7293},
+  {n:6,name:'Shibuya Sky',jp:'渋谷スカイ',desc:'Смотровая на крыше Shibuya Scramble Square — 360° вид на весь Токио.',price:'¥3,000 · 1 331,78 ₽',hours:'10:00–22:30',img:P.shibuya_sky,lat:35.6580,lng:139.7025},
+  {n:7,name:'Hachiko Statue',jp:'ハチ公像',desc:'Бронзовая статуя верного пса — главная точка встречи у станции Сибуя.',price:'Бесплатно',hours:'24/7',img:P.hachiko,lat:35.6591,lng:139.7006},
+  {n:8,name:'Shibuya Crossing',jp:'渋谷スクランブル',desc:'Самый загруженный перекрёсток мира — тысячи людей переходят одновременно.',price:'Бесплатно',hours:'24/7',img:P.shibuya,lat:35.6595,lng:139.7004},
  ],
- budget:{transport:'¥600 · 273 ₽',entry:'¥6,500 · 2 963 ₽',total:'¥7,100 · 3 236 ₽'}},
+ budget:{transport:'¥1,500–2,000',entry:'¥8,900 · 4 022 ₽',total:'¥10,400–10,900 · 4 022 ₽'}},
+
+{tab:'28 сент',city:'Гарри Поттер · выставки',jp:'東京',mapColor:'#888',
+ note:'Билеты WB бронировать заранее. Полу-свободный день.',
+ transit:[{icon:'metro',route:'Метро → Тосимаэн / JR Яматэ',detail:'WB Studio + Мэйдзи / Симокитадзawa · IC-карта',cost:'¥1,500–2,000 · IC'}],
+ places:[
+  {n:1,name:'Warner Bros. Studio Tour Tokyo',jp:'ワーナー ブラザース スタジオツアー東京',desc:'Реальные декорации Гарри Поттера: Хогвартс, Косой переулок, Косяк № 9¾',price:'¥6,500 · 3 276,87 ₽',hours:'по слоту брони',img:P.wb_studio,lat:35.7396,lng:139.6623},
+  {n:2,name:'Meiji Shrine',jp:'明治神宮',desc:'Главная святыня Токио в лесу из 120 000 деревьев.',price:'Бесплатно',hours:'Рассвет–закат',img:P.meiji,lat:35.6764,lng:139.6993},
+  {n:3,name:'Shimokitazawa',jp:'下北沢',desc:'Винтажные магазины, бары, более «местный» вайб, чем Сибуя.',price:'Бесплатно',hours:'11:00–22:00',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
+ ],
+ budget:{transport:'¥1,500–2,000',entry:'¥6,500 · 3 276,87 ₽',total:'¥8,000–8,500 · 3 276,87 ₽'}},
 
 {tab:'29 сент',city:'Камакура',jp:'鎌倉・江の島',mapColor:'#888',
  transit:[
-  {icon:'train',route:'Tokyo → Kamakura',detail:'JR Ёкосука, 55 мин',cost:'¥1,000 · 456 ₽'},
-  {icon:'train',route:'Обратно Enoshima → Tokyo',detail:'Enoden + JR, ~1 ч',cost:'¥1,300 · 593 ₽'},
+  {icon:'train',route:'Tokyo → Kamakura',detail:'JR Ёкосука, 55 мин · IC-карта',cost:'¥1,000 · IC',link:TICKET_LINKS.tokyo_kamakura,linkLabel:'Trip.com'},
+  {icon:'train',route:'Обратно Enoshima → Tokyo',detail:'Enoden + JR, ~1 ч · IC-карта',cost:'¥1,300 · IC',link:TICKET_LINKS.enoshima_tokyo,linkLabel:'Trip.com'},
  ],
  places:[
   {n:1,name:'Engaku-ji',jp:'円覚寺',desc:'Дзэн-монастырь XIII в. у подножия горы — один из важнейших в Японии.',price:'¥500 · 228 ₽',hours:'8:30–16:00',img:P.engakuji,lat:35.3383,lng:139.5483},
@@ -1033,16 +1093,13 @@ const DAYS=[
   {n:6,name:'Hase-dera',jp:'長谷寺',desc:'Один из красивейших храмов Камакуры — смотровая с видом на залив.',price:'¥400 · 182 ₽',hours:'8:00–16:30',img:P.hasedera,lat:35.3139,lng:139.5347},
   {n:7,name:'Enoshima Shrine',jp:'江島神社',desc:'Синтоистский комплекс на острове: пещеры Ивайя, закат над океаном, вид на Фудзи.',price:'Бесплатно',hours:'24/7',img:P.enoshima,lat:35.2994,lng:139.4813},
  ],
- budget:{transport:'¥2,300 · 1 048 ₽',entry:'¥2,000 · 912 ₽',total:'¥4,300 · 1 960 ₽'}},
+ budget:{transport:'¥2,300',entry:'¥2,000 · 912 ₽',total:'¥4,300 · 912 ₽'}},
 
 {tab:'30 сент',city:'Токио · Финал',jp:'東京',mapColor:'#888',
- note:'Последний день — маршрут не заполнен. Идеально для шопинга, музеев или повторного посещения любимых мест.',
- transit:[],
- places:[
-  {n:1,name:'Shinjuku Gyoen',jp:'新宿御苑',desc:'Государственный сад 65 га: 450 сортов сакуры, лужайки, японская и французская зоны.',price:'¥500 · 228 ₽',hours:'9:00–18:00',img:P.shinjuku_gyoen,lat:35.6850,lng:139.7100},
-  {n:2,name:'Hamarikyu Gardens',jp:'浜離宮恩賜庭園',desc:'Традиционный сад с чайным домиком прямо у Токийского залива и небоскрёбов Одайбы.',price:'¥300 · 137 ₽',hours:'9:00–17:00',img:P.koishikawa,lat:35.6600,lng:139.7631},
- ],
- budget:{transport:'¥500 · 228 ₽',entry:'¥800 · 365 ₽',total:'¥1,300 · 593 ₽'}},
+ note:'Финал, выезд. Маршрут свободный — шопинг, повтор любимых мест или отдых перед дорогой.',
+ transit:[{icon:'metro',route:'Токио, местные',detail:'IC-карта',cost:'¥1,000–1,500 · IC'}],
+ places:[],
+ budget:{transport:'¥1,000–1,500',total:'¥1,000–1,500'}},
 ];
 
 // ─── TRANSIT ICONS ────────────────────────
@@ -1094,19 +1151,17 @@ const STAYS={
   }],
 };
 
+const SHOPS=[
+  {id:'donki',name:'Don Quijote',jp:'ドン・キホーテ',desc:'Дискаунтер на любой случай — сувениры, косметика, снеки, электроника, tax-free.',url:'https://www.donki.com/en/',urlLabel:'donki.com',img:imgPath('Don Quijote.jpg')},
+  {id:'muji',name:'MUJI',jp:'無印良品',desc:'Минималистичные вещи для дома, одежды, канцелярии и путешествий.',url:'https://www.muji.eu/',urlLabel:'muji.eu',img:imgPath('MUJI.jpg')},
+  {id:'atmos',name:'atmos',jp:'アトモス',desc:'Кроссовки и стритвир — японские релизы, коллаборации и лимитированные дропы.',url:'https://www.atmos-tokyo.com/',urlLabel:'atmos-tokyo.com',img:imgPath('atmos.jpg')},
+];
+
 const EXTRA_PLACES={
   osaka:[
     {name:'Katsuoji Temple',jp:'勝尾寺',desc:'Храм «победы» в горах Миноо — тысячи красных дарума, сады и вид на осенние клёны',price:'¥500 · 228 ₽',hours:'8:00–17:00',img:P.katsuoji,lat:34.8656,lng:135.4923},
   ],
-  tokyo:[
-    {name:'The National Art Center',jp:'国立新美術館',desc:'Футуристичное здание, крупнейшая выставочная площадка Японии',price:'Бесплатно',hours:'10:00–18:00',img:P.national_art,lat:35.6653,lng:139.7263},
-    {name:'Shimokitazawa',jp:'下北沢',desc:'Винтажные магазины, бары, более «местный» вайб, чем Сибуя.',price:'Бесплатно',hours:'11:00–22:00',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
-    {name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',desc:'Иммерсивное цифровое искусство в Тойосу — очень популярно',price:'¥3,800 · 1 733 ₽',hours:'8:30–22:00',img:P.teamlab,lat:35.6491,lng:139.7917},
-    {name:'Azabudai Hills',jp:'麻布台ヒルズ',desc:'Крупный многофункциональный городской комплекс',price:'Бесплатно',hours:'24/7',img:P.azabudai,lat:35.6614,lng:139.7410},
-    {name:'Mori Art Museum',jp:'森美術館',desc:'Один из ведущих музеев современного искусства — Roppongi Hills, 53 этаж',price:'¥1,800 · 821 ₽',hours:'10:00–22:00',img:P.mori_art,lat:35.6605,lng:139.7293},
-    {name:'Nezu Shrine',jp:'根津神社',desc:'Один из старейших синтоистских храмов Токио, район Бункё',price:'Бесплатно',hours:'6:00–18:00',img:P.nezu,lat:35.7202,lng:139.7628},
-    {name:'Ueno Park',jp:'上野恩賜公園',desc:'Один из самых известных городских парков Токио',price:'Бесплатно',hours:'24/7',img:P.ueno_park,lat:35.7148,lng:139.7734},
-  ],
+  tokyo:[],
 };
 
 const TYPO_WORDS='через|около|перед|после|между|ещё|уже|все|там|тут|где|или|что|как|это|при|для|про|над|под|без|под|со|об|во|не|на|но|ни|от|до|за|из|по|да|ли|же|бы|а|и|к|с|у|о|в|я';
@@ -1208,6 +1263,17 @@ function renderDayFilters(regionId){
   </div>`;
 }
 
+function renderShopsSection(){
+  return`<div id="places-shops" class="places-view">
+    <div class="city-section" id="city-shops">
+      <h2 class="city-title">Магазины <span class="city-title-jp jp">ショップ</span></h2>
+      <div class="places-grid">${SHOPS.map(s=>renderPlaceCard({
+        name:s.name,jp:s.jp,desc:s.desc,link:s.url,urlLabel:s.urlLabel,img:s.img
+      },false)).join('')}</div>
+    </div>
+  </div>`;
+}
+
 function renderCityMap(id,title,count,regionId){
   const loc=count===1?'место':count<5?'места':'мест';
   return`<div class="section-label">${count} ${loc}</div>
@@ -1235,13 +1301,19 @@ function renderCityMap(id,title,count,regionId){
 function renderPlaceCard(pl,showNum){
   const num=showNum&&pl.n?`<div class="place-num">${pl.n}</div>`:'';
   const nameShort=NAME_MOB[pl.name]||pl.name;
+  const photoInner=pl.img
+    ?`<img class="place-photo" src="${pl.img}" alt="${pl.name}" loading="lazy"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    :`<div class="place-photo-placeholder" aria-hidden="true"></div>`;
+  const photoErr=`<div class="place-photo-err">Изображение недоступно</div>`;
+  const photoWrap=pl.link
+    ?`<a class="place-photo-wrap place-photo-wrap--link" href="${pl.link}" target="_blank" rel="noopener">${photoInner}${photoErr}${num}</a>`
+    :`<div class="place-photo-wrap">${photoInner}${photoErr}${num}</div>`;
+  const meta=pl.link
+    ?`<a class="place-meta-item place-meta-link" href="${pl.link}" target="_blank" rel="noopener">${pl.urlLabel||pl.link}</a>`
+    :`<span class="place-meta-item">${formatMoney(pl.price)}</span>${pl.hours?`<span class="place-meta-sep" aria-hidden="true"></span><span class="place-meta-item">${pl.hours}</span>`:''}`;
   return`<div class="place">
-    <div class="place-photo-wrap">
-      <img class="place-photo" src="${pl.img}" alt="${pl.name}" loading="lazy"
-        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="place-photo-err">Изображение недоступно</div>
-      ${num}
-    </div>
+    ${photoWrap}
     <div class="place-body">
       <div class="place-head">
         <div class="place-titles">
@@ -1251,9 +1323,7 @@ function renderPlaceCard(pl,showNum){
         </div>
         <div class="place-desc">${formatDesc(pl.desc)}</div>
       </div>
-      <div class="place-meta">
-        <span class="place-meta-item">${formatMoney(pl.price)}</span>${pl.hours?`<span class="place-meta-sep" aria-hidden="true"></span><span class="place-meta-item">${pl.hours}</span>`:''}
-      </div>
+      <div class="place-meta">${meta}</div>
     </div>
   </div>`;
 }
@@ -1291,9 +1361,14 @@ placesPanel.className='panel';
 placesPanel.id='panel-places';
 placesPanel.innerHTML=`
   <div class="day-header">
-    <div class="day-index">по городам</div>
+    <div class="day-index">каталог</div>
     <div class="day-title"><span class="day-city">Места </span><span class="day-city-jp">スポット</span></div>
   </div>
+  <div class="places-subnav">
+    <button type="button" class="places-subtab active" data-places-view="cities">По городам</button>
+    <button type="button" class="places-subtab" data-places-view="shops">Магазины</button>
+  </div>
+  <div id="places-cities" class="places-view places-view--active">
   ${REGIONS.map(r=>{
     const items=placesCatalog[r.id];
     if(!items.length)return'';
@@ -1302,7 +1377,9 @@ placesPanel.innerHTML=`
       ${renderCityMap('city-'+r.id,r.name,items.length,r.id)}
       <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
     </div>`;
-  }).join('')}`;
+  }).join('')}
+  </div>
+  ${renderShopsSection()}`;
 
 DAYS.forEach((d,i)=>{
   const t=document.createElement('div');
@@ -1336,6 +1413,7 @@ DAYS.forEach((d,i)=>{
         <div class="transit-route">${t.route}</div>
         ${t.detail?`<div class="transit-detail">${t.detail}</div>`:''}
         ${t.cost?`<div class="transit-cost">${formatMoney(t.cost)}</div>`:''}
+        ${t.link?`<a class="transit-link" href="${t.link}" target="_blank" rel="noopener">${t.linkLabel||'Купить билет'}</a>`:''}
       </div>
     </div>`).join('');
 
@@ -1383,29 +1461,38 @@ DAYS.forEach((d,i)=>{
 
 // ─── EXPENSES PANEL ────────────────────
 const EXPENSES=[
-  {cat:'Транспорт',items:[
-    {name:'Осака → Фудзи (Синкансэн)',jpy:'¥9,600',rub:'4 376 ₽'},
-    {name:'Автобус Mishima → Kawaguchiko',jpy:'¥2,500',rub:'1 140 ₽'},
-    {name:'Kawaguchiko → Shinjuku',jpy:'¥4,200',rub:'1 914 ₽'},
-    {name:'Токио ↔ Камакура/Эносима',jpy:'¥2,300',rub:'1 048 ₽'},
-    {name:'Kawaguchiko → Shinjuku (Токио)',jpy:'¥4,200',rub:'2 000 ₽'},
-  ],total:{jpy:'~¥22,800',rub:'~10 478 ₽'}},
+  {cat:'IC-карта',items:[
+    {name:'Кансай → Осака',jpy:'¥1,200–1,900',rub:'547–866 ₽'},
+    {name:'Осака, местные (17–18 сент)',jpy:'¥1,500–2,500',rub:'684–1 140 ₽'},
+    {name:'Осака → Нара',jpy:'¥490',rub:'223 ₽'},
+    {name:'Осака → USJ',jpy:'¥180',rub:'82 ₽'},
+    {name:'Mishima → Kawaguchiko · автобус*',jpy:'¥2,500',rub:'1 140 ₽'},
+    {name:'Kawaguchiko → Сайко',jpy:'¥710',rub:'324 ₽'},
+    {name:'Токио, метро/JR (5 дней)',jpy:'¥5,000–7,500',rub:'2 280–3 420 ₽'},
+    {name:'Tokyo → Kamakura',jpy:'¥1,000',rub:'456 ₽'},
+    {name:'Enoshima → Tokyo',jpy:'¥1,300',rub:'593 ₽'},
+  ],total:{jpy:'~¥13,880–18,080',rub:'~6 329–8 244 ₽'},note:'*горные автобусы иногда только наличные'},
+  {cat:'Отдельные билеты',items:[
+    {name:'Осака → Киото',jpy:'¥1,420–2,810',rub:'647–1 281 ₽'},
+    {name:'Shin-Osaka → Mishima · синкансэн',jpy:'~¥13,000–15,000',rub:'~5 928–6 840 ₽'},
+    {name:'Kawaguchiko → Shinjuku · Fuji Excursion',jpy:'¥4,200',rub:'1 915 ₽'},
+  ],total:{jpy:'~¥18,620–21,810',rub:'~8 491–9 945 ₽'}},
   {cat:'Входные билеты',items:[
     {name:'Osaka Castle',jpy:'¥600',rub:'273 ₽'},
     {name:'Umeda Sky Building',jpy:'¥1,500',rub:'684 ₽'},
     {name:'Kiyomizu-dera + To-ji',jpy:'¥1,000',rub:'456 ₽'},
     {name:'Tōfuku-ji + Nijo Castle',jpy:'¥2,500',rub:'1 140 ₽'},
     {name:'Tōdai-ji (Нара)',jpy:'¥600',rub:'273 ₽'},
-    {name:'USJ (без Express Pass)',jpy:'¥8,600',rub:'3 920 ₽'},
+    {name:'USJ (без Express Pass)',jpy:'¥8,600',rub:'5 720 ₽'},
     {name:'Kachi Kachi Ropeway',jpy:'¥1,000',rub:'456 ₽'},
     {name:'Saiko + Oshino Hakkai',jpy:'¥800',rub:'365 ₽'},
     {name:'Hie Shrine · Коисикава',jpy:'¥300',rub:'137 ₽'},
     {name:'Tokyo Skytree',jpy:'¥3,000',rub:'1 367 ₽'},
-    {name:'Shibuya Sky',jpy:'¥3,000',rub:'1 367 ₽'},
+    {name:'Shibuya Sky',jpy:'¥3,000',rub:'1 331,78 ₽'},
     {name:'Нац. музей Токио',jpy:'¥1,000',rub:'456 ₽'},
-    {name:'Warner Bros. Studio Tour',jpy:'~¥6,500',rub:'~2 963 ₽'},
+    {name:'Warner Bros. Studio Tour',jpy:'¥6,500',rub:'3 276,87 ₽'},
     {name:'Камакура (все храмы)',jpy:'¥2,000',rub:'912 ₽'},
-  ],total:{jpy:'~¥32,400',rub:'~14 768 ₽'}},
+  ],total:{jpy:'~¥32,400',rub:'~16 848 ₽'}},
 ];
 const expPanel=document.createElement('div');
 expPanel.className='panel';expPanel.id='panel-exp';
@@ -1417,16 +1504,31 @@ expPanel.innerHTML=`
   ${EXPENSES.map(s=>`
     <div class="exp-section">
       <h3>${s.cat}</h3>
+      ${s.note?`<p class="exp-note">${s.note}</p>`:''}
       ${s.items.map(it=>`<div class="exp-row"><span class="exp-label">${it.name}</span><span class="exp-val">${formatMoneyPair(it.jpy,it.rub)}</span></div>`).join('')}
       <div class="exp-row"><span class="exp-label" style="font-style:normal;font-weight:600;color:var(--text-1)">Итого</span><span class="exp-val">${formatMoneyPair(s.total.jpy,s.total.rub)}</span></div>
     </div>`).join('')}
   <div class="exp-total">
     <div class="t-label">без авиабилетов и отелей</div>
-    <div class="t-jpy">~¥54,800</div>
-    <div class="t-rub">(~25 246₽)</div>
+    <div class="t-sum">Итого: ~¥65 000–72 000 · ~31 700–35 000 ₽</div>
   </div>`;
 panelsEl.appendChild(expPanel);
 panelsEl.appendChild(placesPanel);
+
+function initPlacesSubnav(){
+  document.querySelectorAll('.places-subtab').forEach(btn=>{
+    btn.onclick=()=>{
+      if(btn.classList.contains('active'))return;
+      document.querySelectorAll('.places-subtab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const view=btn.dataset.placesView;
+      document.getElementById('places-cities').classList.toggle('places-view--active',view==='cities');
+      document.getElementById('places-shops').classList.toggle('places-view--active',view==='shops');
+      if(view==='cities')setTimeout(()=>initAllCityMaps(),80);
+    };
+  });
+}
+initPlacesSubnav();
 
 // ─── MAP INIT ──────────────────────────
 let fsMapId=null;

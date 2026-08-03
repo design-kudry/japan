@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<title>Токио · варианты маршрута · 24–29 сент</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--surface-dim:#F3F3F1;--border:#E3E3E0;--text-1:#111110;--text-2:#5A5A57;--text-3:#9A9A97;--r:12px;--page-max:1008px;--viewport-pad:32px}
+body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text-1);font-size:15px;line-height:1.45;letter-spacing:-.4px}
+.wrap{max-width:var(--page-max);margin:0 auto;padding:24px var(--viewport-pad) 64px}
+.top-note{font-size:12px;color:var(--text-3);margin-bottom:8px}
+h1{font-size:36px;font-weight:700;line-height:1.05;margin-bottom:16px;letter-spacing:-.8px}
+h1 span{font-weight:400;color:var(--text-2)}
+.nav-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.nav-pill{padding:8px 14px;font-size:12px;color:var(--text-3);cursor:pointer;border-radius:20px;border:1px solid transparent;transition:.15s;white-space:nowrap}
+.nav-pill.active{color:#fff;font-weight:600;background:var(--text-1)}
+.nav-pill:hover:not(.active){background:var(--surface-dim);color:var(--text-1)}
+.nav-pill--outline{border-color:var(--border);background:#fff}
+.nav-pill--outline.active{border-color:var(--text-1)}
+.compare-bar{background:var(--surface-dim);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text-2);display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.compare-bar label{display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--text-1)}
+.compare-bar input{width:15px;height:15px;accent-color:var(--text-1)}
+.compare-hint{font-size:12px;color:var(--text-3);font-weight:400}
+.tabs-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 calc(-1 * var(--viewport-pad));padding:0 var(--viewport-pad) 4px}
+.tabs{display:flex;gap:4px;min-width:max-content;margin-bottom:24px}
+.tab{padding:8px 14px;font-size:12px;color:var(--text-3);cursor:pointer;border-radius:20px;border:1px solid transparent;white-space:nowrap;transition:.15s}
+.tab.active{color:#fff;font-weight:600;background:var(--text-1)}
+.tab:hover:not(.active){background:var(--surface-dim);color:var(--text-1)}
+.view-section{display:none}.view-section.active{display:block}
+.panel{display:none}.panel.active{display:block}
+.day-header{margin-bottom:20px}
+.day-date{font-size:10px;color:var(--text-3);text-transform:lowercase;margin-bottom:4px}
+.day-title{font-size:32px;font-weight:700;line-height:1.1}
+.day-note{background:var(--surface-dim);border-left:2px solid var(--text-1);padding:12px 16px;font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.55}
+.day-note strong{color:var(--text-1);font-weight:600}
+.schedule{margin-bottom:24px}
+.block{margin-bottom:16px}
+.block-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:6px}
+.block ul{list-style:none;padding:0}
+.block li{font-size:14px;color:var(--text-2);padding:3px 0 3px 14px;position:relative}
+.block li::before{content:'';position:absolute;left:0;top:.65em;width:5px;height:5px;border-radius:50%;background:var(--text-3)}
+.block li b,.block li strong{color:var(--text-1);font-weight:600}
+.block li.is-off{color:var(--text-3);text-decoration:line-through;opacity:.65}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle}
+.tag-book{background:#FFF3E0;color:#E65100}
+.map-wrap{border-radius:var(--r);overflow:hidden;border:1px solid var(--border);background:#EAE8E4;margin-bottom:20px;position:relative}
+.day-map{height:280px}
+.map-actions{position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:center;z-index:500;pointer-events:none}
+.map-btn{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.97);border:1px solid var(--border);color:var(--text-1);font-size:11px;font-weight:600;padding:7px 14px;border-radius:20px;text-decoration:none;cursor:pointer}
+.map-btn:hover{background:var(--text-1);color:#fff}
+.map-btn--icon{position:absolute;top:10px;right:10px;z-index:401;width:32px;height:32px;padding:0;border-radius:8px;justify-content:center}
+.map-wrap--fullscreen .map-btn--fs{display:none}
+.map-fs-top{display:none;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0}
+.map-fs-title{font-size:13px;font-weight:600}
+.map-fs-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.map-fs-close:hover{background:var(--text-1);color:#fff}
+body.map-fs-open{overflow:hidden}
+.map-wrap--fullscreen{position:fixed;inset:0;z-index:3000;margin:0;border-radius:0;border:none;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.map-wrap--fullscreen .map-fs-top{display:flex}
+.map-wrap--fullscreen .day-map{flex:1;height:auto!important;min-height:0}
+.map-wrap .leaflet-top.leaflet-right{top:50%;right:10px;transform:translateY(-50%)}
+.map-day-filters{position:absolute;top:10px;left:10px;z-index:450;background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:10px;padding:8px 10px;max-height:200px;overflow-y:auto;pointer-events:auto;display:flex;flex-direction:column;gap:5px;max-width:min(168px,calc(100% - 56px))}
+.map-day-filter{display:flex;align-items:center;gap:6px;font-size:10.5px;cursor:pointer;white-space:nowrap}
+.map-day-filter input{width:13px;height:13px;margin:0;accent-color:var(--text-1)}
+.map-day-filter--all{font-weight:600;padding-bottom:4px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.map-day-swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.place{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:#fff}
+.place-photo-wrap{position:relative;aspect-ratio:4/3;background:#ddd}
+.place-photo{width:100%;height:100%;object-fit:cover;display:block}
+.place-num{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:50%;background:var(--text-1);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.place-body{padding:10px 12px 12px}
+.place-name{font-size:13px;font-weight:600;line-height:1.25}
+.place-jp{font-size:11px;color:var(--text-3);margin-top:2px}
+.leaflet-control-zoom{border:none!important}
+.leaflet-control-zoom a{background:rgba(255,255,255,.97)!important;border:1px solid var(--border)!important;color:var(--text-1)!important;width:32px!important;height:32px!important;line-height:30px!important;font-size:18px!important}
+.photo-marker{width:38px;height:38px;border-radius:50%;overflow:hidden;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.18);position:relative;background:#888;cursor:pointer}
+.photo-marker img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-marker .badge{position:absolute;bottom:-2px;right:-2px;min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--text-1);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
+.photo-marker--off-route{border-color:#E53935;box-shadow:0 0 0 2px rgba(229,57,53,.35),0 2px 8px rgba(0,0,0,.2)}
+.stay-marker{width:38px;height:38px;border-radius:50%;background:#C2410C;color:#fff;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center}
+.leaflet-popup-content-wrapper{border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.1);border:1px solid var(--border)}
+.leaflet-popup-content{margin:10px 12px;min-width:150px}
+.popup-img{width:100%;height:88px;object-fit:cover;border-radius:6px;margin-bottom:7px;display:block}
+.popup-name{font-weight:600;font-size:13px}
+.popup-sub{font-size:11px;color:var(--text-3);margin-top:2px}
+@media(max-width:640px){.wrap{padding:16px}.h1{font-size:28px}.day-title{font-size:26px}.day-map{height:220px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-note">тест · сравнение двух маршрутов · не в основном сайте</div>
+  <h1>Токио <span>· 24–29 сентября</span></h1>
+
+  <div class="nav-row" id="variant-nav">
+    <div class="nav-pill active" data-variant="v1">Вариант 1</div>
+    <div class="nav-pill" data-variant="v2">Вариант 2</div>
+    <div class="nav-pill" data-variant="v3">Вариант 3</div>
+  </div>
+
+  <div class="compare-bar" id="hamarikyu-bar">
+    <label><input type="checkbox" id="hamarikyu-toggle" checked> Hamarikyu Gardens в маршруте</label>
+    <span class="compare-hint" id="hamarikyu-hint">вар.1 → 28 сент · вар.2 → 29 сент (рядом с Роппонги)</span>
+  </div>
+
+  <div class="nav-row">
+    <div class="nav-pill nav-pill--outline active" data-view="route">Маршрут</div>
+    <div class="nav-pill nav-pill--outline" data-view="map">Карта</div>
+  </div>
+
+  <div class="view-section active" id="view-route">
+    <div class="tabs-scroll"><div class="tabs" id="tabs"></div></div>
+    <div id="panels"></div>
+  </div>
+
+  <div class="view-section" id="view-map">
+    <div class="day-note" style="margin-top:0">Все места · фильтры по дням · клик на маркер — миниатюра</div>
+    <div class="map-wrap" id="mapwrap-city">
+      <div class="map-day-filters" id="day-filters"></div>
+      <div class="map-fs-top"><span class="map-fs-title" id="city-map-title">Токио</span>
+        <button type="button" class="map-fs-close" aria-label="Закрыть"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="day-map" id="map-city"></div>
+      <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-city" aria-label="На весь экран">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
+      </button>
+      <div class="map-actions"><a class="map-btn" id="gmap-city" href="#" target="_blank" rel="noopener">Google Maps</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const imgPath=f=>encodeURI('image/'+f);
+const STAY={name:'MAT Ryogoku',jp:'両国',address:'1-5-7 Ryogoku, Sumida',lat:35.6948,lng:139.7928};
+const DAY_COLORS={24:'#1565C0',25:'#2E7D32',26:'#6A1B9A',27:'#EF6C00',28:'#C62828',29:'#455A64'};
+const HAMARIKYU={name:'Hamarikyu Gardens',jp:'浜離宮恩賜庭園',img:imgPath('Hamarikyu Gardens.jpg'),lat:35.6600,lng:139.7631,toggleKey:'hamarikyu'};
+
+const P={
+  kameido:imgPath('Kameido Tenjin Shrine.jpg'),skytree:imgPath('Tokyo Skytree.jpg'),
+  sensoji:imgPath('Senso-ji.jpg'),nakamise:imgPath('Nakamise.jpg'),sumida:imgPath('Sumida Park.jpg'),
+  akihabara:imgPath('Akihabara Electric Town .jpg'),tnm:imgPath('Tokyo National Museum.jpg'),
+  ueno:imgPath('Ueno Park.jpg'),nezu:imgPath('Nezu Shrine.jpg'),yanaka:imgPath('Yanaka Ginza.jpg'),
+  meiji:imgPath('Meiji Shrine.jpg'),shibuya:imgPath('Shibuya Crossing.jpg'),hachiko:imgPath('Hachiko Statue .jpg'),
+  shimokitazawa:imgPath('Shimokitazawa.jpg'),shibuya_sky:imgPath('Shibuya Sky.jpg'),
+  imperial:imgPath('Imperial Palace.jpg'),yasukuni:imgPath('Yasukuni Shrine.jpg'),
+  kagurazaka:imgPath('Kagurazaka.jpg'),koishikawa:imgPath('Koishikawa Korakuen Garden.jpg'),
+  hie:imgPath('Hie Shrine.jpg'),gyoen:imgPath('Shinjuku Gyoen.jpg'),
+  omoide:imgPath('Omoide Yokocho.jpg'),kabukicho:imgPath('Kabukicho.jpg'),golden:imgPath('Golden Gai.jpg'),
+  wb:imgPath('Warner Bros. Studio Tour Tokyo.jpg'),teamlab:imgPath('TeamLab Planets.jpg'),
+  azabudai:imgPath('Azabudai Hills.jpg'),mori:imgPath('Mori Art Museum.jpg'),national:imgPath('The National Art Center.jpg'),
+};
+
+const VARIANTS={
+v1:{
+  label:'Вариант 1',
+  hamarikyuDay:'28',
+  days:[
+  {id:'24',tab:'24 сент',title:'Асакуса (вечер)',sub:'чт · после заселения 17:00–17:30',
+   note:'Приезд 16:06 → MAT Ryogoku → заселение. Лёгкий вечер.',
+   schedule:[{label:'Вечер',items:['Sumida Park — закат','Tokyo Skytree','Senso-ji — подсветка, без толп','Nakamise — до ~18–19','Ужин в Асакусе']}],
+   places:[
+    {name:'Sumida Park',jp:'隅田公園',img:P.sumida,lat:35.7123,lng:139.7995},
+    {name:'Tokyo Skytree',jp:'東京スカイツリー',img:P.skytree,lat:35.7101,lng:139.8107},
+    {name:'Senso-ji',jp:'浅草寺',img:P.sensoji,lat:35.7148,lng:139.7967},
+    {name:'Nakamise',jp:'仲見世通り',img:P.nakamise,lat:35.7139,lng:139.7972},
+   ]},
+  {id:'25',tab:'25 сент',title:'Уэно → Янака → Акихабара',sub:'пт',
+   note:'Уэно и Янака рядом. Акихабара — <strong>после заката</strong>.',
+   schedule:[{label:'День',items:['Ueno Park','Tokyo National Museum','Nezu Shrine','Yanaka Ginza']},{label:'Вечер',items:['Akihabara Electric Town']}],
+   places:[
+    {name:'Ueno Park',jp:'上野恩賜公園',img:P.ueno,lat:35.7148,lng:139.7734},
+    {name:'Tokyo National Museum',jp:'東京国立博物館',img:P.tnm,lat:35.7189,lng:139.7762},
+    {name:'Nezu Shrine',jp:'根津神社',img:P.nezu,lat:35.7202,lng:139.7628},
+    {name:'Yanaka Ginza',jp:'谷中銀座',img:P.yanaka,lat:35.7272,lng:139.7700},
+    {name:'Akihabara Electric Town',jp:'秋葉原電気街',img:P.akihabara,lat:35.7023,lng:139.7745},
+   ]},
+  {id:'26',tab:'26 сент',title:'Императорский район → Синдзюку 🌃',sub:'сб',
+   note:'После 18:00 — Синдзюку: неон → Omoide → Kabukicho → Golden Gai.',
+   schedule:[
+    {label:'Утро',items:['Imperial Palace','Hie Shrine']},
+    {label:'День',items:['Yasukuni Shrine','Kagurazaka — обед','Koishikawa Korakuen Garden']},
+    {label:'После 18:00',items:['Omoide Yokocho','Kabukicho','Golden Gai']},
+   ],
+   places:[
+    {name:'Imperial Palace',jp:'皇居',img:P.imperial,lat:35.6852,lng:139.7528},
+    {name:'Hie Shrine',jp:'日枝神社',img:P.hie,lat:35.6727,lng:139.7411},
+    {name:'Yasukuni Shrine',jp:'靖国神社',img:P.yasukuni,lat:35.6938,lng:139.7436},
+    {name:'Kagurazaka',jp:'神楽坂',img:P.kagurazaka,lat:35.7008,lng:139.7376},
+    {name:'Koishikawa Korakuen Garden',jp:'小石川後楽園',img:P.koishikawa,lat:35.7070,lng:139.7486},
+    {name:'Omoide Yokocho',jp:'思い出横丁',img:P.omoide,lat:35.6920,lng:139.7007},
+    {name:'Kabukicho',jp:'歌舞伎町',img:P.kabukicho,lat:35.6939,lng:139.7023},
+    {name:'Golden Gai',jp:'ゴールデン街',img:P.golden,lat:35.6938,lng:139.7039},
+   ]},
+  {id:'27',tab:'27 сент',title:'Сибуя',sub:'вс',
+   note:'Shibuya Sky — <strong>17:00–18:00</strong>. После: Shimokitazawa или Роппонги.',
+   schedule:[
+    {label:'День',items:['Meiji Shrine','Shibuya Crossing','Hachiko']},
+    {label:'Закат',items:['Shibuya Sky <span class="tag tag-book">бронь</span>']},
+    {label:'После',items:['Shimokitazawa <em>или</em> Azabudai + Mori Art Museum']},
+   ],
+   places:[
+    {name:'Meiji Shrine',jp:'明治神宮',img:P.meiji,lat:35.6764,lng:139.6993},
+    {name:'Shibuya Crossing',jp:'渋谷スクランブル',img:P.shibuya,lat:35.6595,lng:139.7004},
+    {name:'Hachiko Statue',jp:'ハチ公像',img:P.hachiko,lat:35.6591,lng:139.7006},
+    {name:'Shibuya Sky',jp:'渋谷スカイ',img:P.shibuya_sky,lat:35.6580,lng:139.7025,book:true},
+    {name:'Shimokitazawa',jp:'下北沢',img:P.shimokitazawa,lat:35.6617,lng:139.6662,optional:true},
+    {name:'Azabudai Hills',jp:'麻布台ヒルズ',img:P.azabudai,lat:35.6614,lng:139.7410,optional:true},
+    {name:'Mori Art Museum',jp:'森美術館',img:P.mori,lat:35.6605,lng:139.7293,optional:true},
+   ]},
+  {id:'28',tab:'28 сент',title:'Warner Bros. + центр',sub:'пн',
+   note:'Warner Bros. — полдня. teamLab вечером. Hamarikyu — переключатель ниже.',
+   schedule:[
+    {label:'09:00–13:30',items:['Warner Bros. Studio Tour Tokyo']},
+    {label:'После',items:['The National Art Center','<span data-hama-item>Hamarikyu Gardens</span>']},
+    {label:'Вечер',items:['teamLab Planets TOKYO <span class="tag tag-book">бронь</span>']},
+   ],
+   places:[
+    {name:'Warner Bros. Studio Tour Tokyo',jp:'WBスタジオツアー',img:P.wb,lat:35.7396,lng:139.6623},
+    {name:'The National Art Center',jp:'国立新美術館',img:P.national,lat:35.6653,lng:139.7263},
+    {...HAMARIKYU,toggleKey:'hamarikyu'},
+    {name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',img:P.teamlab,lat:35.6491,lng:139.7917,book:true},
+   ]},
+  {id:'29',tab:'29 сент',title:'Последний день',sub:'вт · выезд 20–21',
+   note:'Kameido рядом с отелем. К 17:00–18:00 — в аэропорт.',
+   schedule:[{label:'До выезда',items:['Kameido Tenjin Shrine','Shinjuku Gyoen — если не успели']}],
+   places:[
+    {name:'Kameido Tenjin Shrine',jp:'亀戸天神社',img:P.kameido,lat:35.6955,lng:139.8241},
+    {name:'Shinjuku Gyoen',jp:'新宿御苑',img:P.gyoen,lat:35.6850,lng:139.7100,optional:true},
+   ]},
+  ]},
+v2:{
+  label:'Вариант 2',
+  hamarikyuDay:'29',
+  days:[
+  {id:'24',tab:'24 сент',title:'Заезд',sub:'чт · свободны с ~17:00',
+   note:'16:06 прибытие → заселение → к 17:00 выходим. Лёгкий вечер после перелёта.',
+   schedule:[{label:'Вечер',items:[
+    'Kameido Tenjin Shrine — 10–15 мин от отеля, вечером спокойно',
+    'Tokyo Skytree — подсветка до ~21:00',
+    'Ужин в Осиагэ / Сумида или Кинсичо',
+   ]}],
+   places:[
+    {name:'Kameido Tenjin Shrine',jp:'亀戸天神社',img:P.kameido,lat:35.6955,lng:139.8241},
+    {name:'Tokyo Skytree',jp:'東京スカイツリー',img:P.skytree,lat:35.7101,lng:139.8107},
+   ]},
+  {id:'25',tab:'25 сент',title:'Асакуса → Акихабара → Уэно → Янака',sub:'пт · линия Гиндза/Собу',
+   note:'Цепочка одно за другим. Senso-ji — <strong>утром пораньше</strong> (с 6:00). Yanaka — на закат.',
+   schedule:[{label:'Маршрут',items:[
+    'Senso-ji + Nakamise — утро',
+    'Sumida Park — вид на Skytree',
+    'Akihabara Electric Town — 5 мин от Асакусы',
+    'Tokyo National Museum (чт ✓)',
+    'Ueno Park · Nezu Shrine · Yanaka Ginza',
+   ]}],
+   places:[
+    {name:'Senso-ji',jp:'浅草寺',img:P.sensoji,lat:35.7148,lng:139.7967},
+    {name:'Nakamise',jp:'仲見世通り',img:P.nakamise,lat:35.7139,lng:139.7972},
+    {name:'Sumida Park',jp:'隅田公園',img:P.sumida,lat:35.7123,lng:139.7995},
+    {name:'Akihabara Electric Town',jp:'秋葉原電気街',img:P.akihabara,lat:35.7023,lng:139.7745},
+    {name:'Tokyo National Museum',jp:'東京国立博物館',img:P.tnm,lat:35.7189,lng:139.7762},
+    {name:'Ueno Park',jp:'上野恩賜公園',img:P.ueno,lat:35.7148,lng:139.7734},
+    {name:'Nezu Shrine',jp:'根津神社',img:P.nezu,lat:35.7202,lng:139.7628},
+    {name:'Yanaka Ginza',jp:'谷中銀座',img:P.yanaka,lat:35.7272,lng:139.7700},
+   ]},
+  {id:'26',tab:'26 сент',title:'Сибуя / Харадзюку / Симокитадзава',sub:'сб',
+   note:'Дворец сегодня закрыт — Сибуя сюда. Shibuya Sky — <strong>слот на закат, бронь!</strong>',
+   schedule:[{label:'День',items:[
+    'Meiji Shrine — с утра',
+    'Shibuya Crossing + Hachiko',
+    'Shimokitazawa — днём, магазины и кафе',
+    'Shibuya Sky — закат, вернуться в Сибую к вечеру',
+   ]}],
+   places:[
+    {name:'Meiji Shrine',jp:'明治神宮',img:P.meiji,lat:35.6764,lng:139.6993},
+    {name:'Shibuya Crossing',jp:'渋谷スクランブル',img:P.shibuya,lat:35.6595,lng:139.7004},
+    {name:'Hachiko Statue',jp:'ハチ公像',img:P.hachiko,lat:35.6591,lng:139.7006},
+    {name:'Shimokitazawa',jp:'下北沢',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
+    {name:'Shibuya Sky',jp:'渋谷スカイ',img:P.shibuya_sky,lat:35.6580,lng:139.7025,book:true},
+   ]},
+  {id:'27',tab:'27 сент',title:'Центр → Синдзюку',sub:'вс · сады дворца открыты',
+   note:'Восточные сады — с утра. Shinjuku Gyoen — <strong>до 15:00</strong> (закрытие ~16:00). Вечер: Omoide → Kabukicho → Golden Gai.',
+   schedule:[
+    {label:'Утро',items:['Imperial Palace East Gardens — с 9:00']},
+    {label:'День',items:['Yasukuni Shrine','Kagurazaka — обед','Koishikawa Korakuen Garden','Hie Shrine — можно пропустить, если сжато']},
+    {label:'До 15:00',items:['Shinjuku Gyoen']},
+    {label:'Вечер · Синдзюку',items:['Omoide Yokocho — ужин','Kabukicho','Golden Gai']},
+   ],
+   places:[
+    {name:'Imperial Palace East Gardens',jp:'皇居東御苑',img:P.imperial,lat:35.6876,lng:139.7589},
+    {name:'Yasukuni Shrine',jp:'靖国神社',img:P.yasukuni,lat:35.6938,lng:139.7436},
+    {name:'Kagurazaka',jp:'神楽坂',img:P.kagurazaka,lat:35.7008,lng:139.7376},
+    {name:'Koishikawa Korakuen Garden',jp:'小石川後楽園',img:P.koishikawa,lat:35.7070,lng:139.7486},
+    {name:'Hie Shrine',jp:'日枝神社',img:P.hie,lat:35.6727,lng:139.7411,optional:true},
+    {name:'Shinjuku Gyoen',jp:'新宿御苑',img:P.gyoen,lat:35.6850,lng:139.7100},
+    {name:'Omoide Yokocho',jp:'思い出横丁',img:P.omoide,lat:35.6920,lng:139.7007},
+    {name:'Kabukicho',jp:'歌舞伎町',img:P.kabukicho,lat:35.6939,lng:139.7023},
+    {name:'Golden Gai',jp:'ゴールデン街',img:P.golden,lat:35.6938,lng:139.7039},
+   ]},
+  {id:'28',tab:'28 сент',title:'Warner Bros. + отдых',sub:'пн · 09:00–14:00',
+   note:'Студия ~40–50 мин от отеля. После — отдых, не грузить teamLab/Роппонги (они на день 29).',
+   schedule:[
+    {label:'09:00–14:00',items:['Warner Bros. Studio Tour Tokyo']},
+    {label:'После',items:['Свободное время / отель / прогулка рядом']},
+   ],
+   places:[
+    {name:'Warner Bros. Studio Tour Tokyo',jp:'WBスタジオツアー',img:P.wb,lat:35.7396,lng:139.6623},
+   ]},
+  {id:'29',tab:'29 сент',title:'Toyosu + Роппонги · вылет',sub:'вт · вечером',
+   note:'Mori + National Art Center открыты по понедельникам — хорошо на последний день. Hamarikyu — переключатель ниже.',
+   schedule:[
+    {label:'Утро',items:['teamLab Planets — 9:00–10:00, 1.5–2 ч <span class="tag tag-book">бронь</span>']},
+    {label:'Роппонги',items:['Azabudai Hills','Mori Art Museum','The National Art Center']},
+    {label:'Рядом',items:['<span data-hama-item>Hamarikyu Gardens</span> — ~15 мин от Роппонги']},
+   ],
+   places:[
+    {name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',img:P.teamlab,lat:35.6491,lng:139.7917,book:true},
+    {name:'Azabudai Hills',jp:'麻布台ヒルズ',img:P.azabudai,lat:35.6614,lng:139.7410},
+    {name:'Mori Art Museum',jp:'森美術館',img:P.mori,lat:35.6605,lng:139.7293},
+    {name:'The National Art Center',jp:'国立新美術館',img:P.national,lat:35.6653,lng:139.7263},
+    {...HAMARIKYU,toggleKey:'hamarikyu'},
+   ]},
+  ]},
+v3:{
+  label:'Вариант 3 · баланс',
+  hamarikyuDay:'29',
+  days:[
+  {id:'24',tab:'24 сент',title:'Заезд · Рёгоку',sub:'чт · с ~17:00',
+   note:'После перелёта — минимум. Kameido рядом, ужин в Рёгоку/Кинсичо. Skytree и Асакуса — завтра одним заходом.',
+   schedule:[{label:'Вечер',items:[
+    'Kameido Tenjin Shrine — 10 мин от отеля',
+    'Ужин в Рёгоку или Кинсичо',
+    'Рано спать — завтра насыщенный день',
+   ]}],
+   places:[
+    {name:'Kameido Tenjin Shrine',jp:'亀戸天神社',img:P.kameido,lat:35.6955,lng:139.8241},
+   ]},
+  {id:'25',tab:'25 сент',title:'Восток: Асакуса → Skytree → Уэно',sub:'пт · одна линия на востоке',
+   note:'Вся «восточная дуга» за один день: утро в Асакусе, Skytree рядом, потом Уэно/Янака. Akihabara — <strong>на закат</strong> по дороге обратно.',
+   schedule:[
+    {label:'Утро · Асакуса',items:['Senso-ji + Nakamise — с 7:00–8:00','Sumida Park']},
+    {label:'День',items:['Tokyo Skytree — смотровая или прогулка у подножия','Ueno Park · Tokyo National Museum','Nezu Shrine · Yanaka Ginza']},
+    {label:'Вечер',items:['Akihabara Electric Town — неон']},
+   ],
+   places:[
+    {name:'Senso-ji',jp:'浅草寺',img:P.sensoji,lat:35.7148,lng:139.7967},
+    {name:'Nakamise',jp:'仲見世通り',img:P.nakamise,lat:35.7139,lng:139.7972},
+    {name:'Sumida Park',jp:'隅田公園',img:P.sumida,lat:35.7123,lng:139.7995},
+    {name:'Tokyo Skytree',jp:'東京スカイツリー',img:P.skytree,lat:35.7101,lng:139.8107},
+    {name:'Ueno Park',jp:'上野恩賜公園',img:P.ueno,lat:35.7148,lng:139.7734},
+    {name:'Tokyo National Museum',jp:'東京国立博物館',img:P.tnm,lat:35.7189,lng:139.7762},
+    {name:'Nezu Shrine',jp:'根津神社',img:P.nezu,lat:35.7202,lng:139.7628},
+    {name:'Yanaka Ginza',jp:'谷中銀座',img:P.yanaka,lat:35.7272,lng:139.7700},
+    {name:'Akihabara Electric Town',jp:'秋葉原電気街',img:P.akihabara,lat:35.7023,lng:139.7745},
+   ]},
+  {id:'26',tab:'26 сент',title:'Сибуя · закат',sub:'сб · дворец закрыт',
+   note:'Суббота — дворец недоступен, зато Сибуя без спешки. Shibuya Sky на закат, вечером — домой отдохнуть перед длинным воскресеньем.',
+   schedule:[
+    {label:'День',items:['Meiji Shrine — с утра','Shibuya Crossing · Hachiko · магазины','Shimokitazawa — обед и винтаж']},
+    {label:'17:00–18:00',items:['Shibuya Sky <span class="tag tag-book">бронь · закат</span>']},
+    {label:'Вечер',items:['Спокойный ужин в Сибуе или Рёгоку — без ночного марафона']},
+   ],
+   places:[
+    {name:'Meiji Shrine',jp:'明治神宮',img:P.meiji,lat:35.6764,lng:139.6993},
+    {name:'Shibuya Crossing',jp:'渋谷スクランブル',img:P.shibuya,lat:35.6595,lng:139.7004},
+    {name:'Hachiko Statue',jp:'ハチ公像',img:P.hachiko,lat:35.6591,lng:139.7006},
+    {name:'Shimokitazawa',jp:'下北沢',img:P.shimokitazawa,lat:35.6617,lng:139.6662},
+    {name:'Shibuya Sky',jp:'渋谷スカイ',img:P.shibuya_sky,lat:35.6580,lng:139.7025,book:true},
+   ]},
+  {id:'27',tab:'27 сент',title:'Дворец → Синдзюку 🌃',sub:'вс · главный день центра',
+   note:'Воскресенье — <strong>Восточные сады открыты</strong>. Gyoen до ~15:00, вечером — классический Синдзюку. Самый плотный, но логичный день.',
+   schedule:[
+    {label:'Утро',items:['Imperial Palace East Gardens — с 9:00, не спешить']},
+    {label:'День',items:['Yasukuni Shrine','Kagurazaka — обед','Koishikawa Korakuen Garden']},
+    {label:'До 15:00',items:['Shinjuku Gyoen']},
+    {label:'После 18:00',items:['Omoide Yokocho — ужин','Kabukicho','Golden Gai']},
+   ],
+   places:[
+    {name:'Imperial Palace East Gardens',jp:'皇居東御苑',img:P.imperial,lat:35.6876,lng:139.7589},
+    {name:'Yasukuni Shrine',jp:'靖国神社',img:P.yasukuni,lat:35.6938,lng:139.7436},
+    {name:'Kagurazaka',jp:'神楽坂',img:P.kagurazaka,lat:35.7008,lng:139.7376},
+    {name:'Koishikawa Korakuen Garden',jp:'小石川後楽園',img:P.koishikawa,lat:35.7070,lng:139.7486},
+    {name:'Shinjuku Gyoen',jp:'新宿御苑',img:P.gyoen,lat:35.6850,lng:139.7100},
+    {name:'Omoide Yokocho',jp:'思い出横丁',img:P.omoide,lat:35.6920,lng:139.7007},
+    {name:'Kabukicho',jp:'歌舞伎町',img:P.kabukicho,lat:35.6939,lng:139.7023},
+    {name:'Golden Gai',jp:'ゴールデン街',img:P.golden,lat:35.6938,lng:139.7039},
+   ]},
+  {id:'28',tab:'28 сент',title:'Warner Bros.',sub:'пн · только студия',
+   note:'Фиксированный слот. После тура — <strong>отдых</strong>: студия утомляет. Mori/National (открыты в пн) — опционально, если останутся силы.',
+   schedule:[
+    {label:'09:00–14:00',items:['Warner Bros. Studio Tour Tokyo']},
+    {label:'После · опционально',items:['The National Art Center · Mori Art Museum — если есть энергия','Иначе: отель, сауна, сон']},
+   ],
+   places:[
+    {name:'Warner Bros. Studio Tour Tokyo',jp:'WBスタジオツアー',img:P.wb,lat:35.7396,lng:139.6623},
+    {name:'The National Art Center',jp:'国立新美術館',img:P.national,lat:35.6653,lng:139.7263,optional:true},
+    {name:'Mori Art Museum',jp:'森美術館',img:P.mori,lat:35.6605,lng:139.7293,optional:true},
+   ]},
+  {id:'29',tab:'29 сент',title:'Toyosu → Роппонги · вылет',sub:'вт · выезд 20–21',
+   note:'Финальный блок: teamLab утром, музеи Роппонги, Hamarikyu — переключатель. К 17:00–18:00 — в аэропорт.',
+   schedule:[
+    {label:'Утро',items:['teamLab Planets — 9:00–10:00 <span class="tag tag-book">бронь</span>']},
+    {label:'День',items:['Azabudai Hills','Mori Art Museum · National Art Center — если не были вчера']},
+    {label:'Рядом',items:['<span data-hama-item>Hamarikyu Gardens</span>']},
+    {label:'Вылет',items:['17:00–18:00 — за вещами и в аэропорт']},
+   ],
+   places:[
+    {name:'teamLab Planets TOKYO',jp:'チームラボプラネッツ',img:P.teamlab,lat:35.6491,lng:139.7917,book:true},
+    {name:'Azabudai Hills',jp:'麻布台ヒルズ',img:P.azabudai,lat:35.6614,lng:139.7410},
+    {name:'Mori Art Museum',jp:'森美術館',img:P.mori,lat:35.6605,lng:139.7293},
+    {name:'The National Art Center',jp:'国立新美術館',img:P.national,lat:35.6653,lng:139.7263},
+    {...HAMARIKYU,toggleKey:'hamarikyu'},
+   ]},
+  ]},
+};
+
+let currentVariant='v1';
+let hamarikyuOn=true;
+let DAYS=[];
+let mapInst={};
+let fsMapId=null,fsRestore=null,cityMapState=null;
+let activeDayIdx=0;
+
+function getVariant(){return VARIANTS[currentVariant];}
+
+function resolveDays(){
+  const src=getVariant().days.map(d=>({...d,places:d.places.map(p=>({...p}))}));
+  const hDay=getVariant().hamarikyuDay;
+  src.forEach(d=>{
+    d.places.forEach(p=>{
+      if(p.toggleKey==='hamarikyu'){
+        p.optional=!hamarikyuOn||d.id!==hDay;
+        if(d.id===hDay&&!hamarikyuOn)p.optional=true;
+        else if(d.id===hDay&&hamarikyuOn)p.optional=false;
+      }
+    });
+  });
+  return src;
+}
+
+function routePlaces(day){return day.places.filter(p=>!p.optional);}
+
+function destroyMaps(){
+  Object.values(mapInst).forEach(m=>{try{m.remove();}catch(e){}});
+  mapInst={};cityMapState=null;
+}
+
+function bindPopup(pl,extra=''){
+  return`<img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+    <div class="popup-name">${pl.name}</div><div class="popup-sub">${pl.jp||''}${extra}</div>`;
+}
+
+function addPhotoMarker(map,pl,{numbered,n,offRoute=false}={}){
+  const html=`<div class="photo-marker${offRoute?' photo-marker--off-route':''}"><img src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">${numbered?`<div class="badge">${n}</div>`:''}</div>`;
+  const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+  L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(bindPopup(pl,offRoute?' · опционально':''));
+}
+
+function addStayMarker(map){
+  const icon=L.divIcon({className:'',html:`<div class="stay-marker"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"/></svg></div>`,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+  L.marker([STAY.lat,STAY.lng],{icon}).addTo(map).bindPopup(`<div class="popup-name">${STAY.name}</div><div class="popup-sub">${STAY.jp}</div>`);
+}
+
+function buildGmapsUrl(pts){
+  if(pts.length<2)return`https://www.google.com/maps/search/?api=1&query=${pts[0]?.lat},${pts[0]?.lng}`;
+  const o=`${pts[0].lat},${pts[0].lng}`,de=`${pts.at(-1).lat},${pts.at(-1).lng}`;
+  const wp=pts.slice(1,-1).map(p=>`${p.lat},${p.lng}`).join('|');
+  let u=`https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${de}&travelmode=transit`;
+  if(wp)u+=`&waypoints=${encodeURIComponent(wp)}`;return u;
+}
+
+function createDayMap(id,day,color){
+  const el=document.getElementById('map-'+id);if(!el)return null;
+  const pts=routePlaces(day);
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+  if(pts.length>1)L.polyline(pts.map(p=>[p.lat,p.lng]),{color,weight:2.5,opacity:.75,dashArray:'6,5'}).addTo(map);
+  pts.forEach((p,i)=>addPhotoMarker(map,p,{numbered:true,n:i+1}));
+  day.places.filter(p=>p.optional).forEach(p=>addPhotoMarker(map,p,{offRoute:true}));
+  addStayMarker(map);
+  const coords=[...day.places,STAY].map(p=>[p.lat,p.lng]);
+  map.fitBounds(L.latLngBounds(coords).pad(0.18));
+  setTimeout(()=>map.invalidateSize(),0);
+  const g=document.getElementById('gmap-'+id);if(g)g.href=buildGmapsUrl(pts);
+  return map;
+}
+
+function initCityMap(){
+  const el=document.getElementById('map-city');
+  const catalog=[];const seen=new Set();
+  DAYS.forEach(d=>d.places.forEach(p=>{if(seen.has(p.name))return;seen.add(p.name);catalog.push(p);}));
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+  const dayLines={};
+  DAYS.forEach(d=>{
+    const pts=routePlaces(d);
+    if(pts.length<2)return;
+    dayLines[d.id]=L.polyline(pts.map(p=>[p.lat,p.lng]),{color:DAY_COLORS[d.id],weight:2.5,opacity:.75,dashArray:'6,5'}).addTo(map);
+  });
+  catalog.forEach(p=>addPhotoMarker(map,p,{offRoute:!!p.optional}));
+  addStayMarker(map);
+  map.fitBounds(L.latLngBounds(catalog.concat([STAY]).map(p=>[p.lat,p.lng])).pad(0.12));
+  setTimeout(()=>map.invalidateSize(),0);
+  document.getElementById('gmap-city').href=buildGmapsUrl(catalog.filter(p=>!p.optional));
+  mapInst.city=map;cityMapState={map,dayLines};
+  renderDayFilters();wireDayFilters();
+}
+
+function renderDayFilters(){
+  document.getElementById('day-filters').innerHTML=`
+    <label class="map-day-filter map-day-filter--all"><input type="checkbox" class="map-day-cb-all" checked> Все дни</label>
+    ${DAYS.map(d=>`<label class="map-day-filter"><input type="checkbox" class="map-day-cb" data-day="${d.id}" checked>
+      <span class="map-day-swatch" style="background:${DAY_COLORS[d.id]}"></span>${d.tab}</label>`).join('')}`;
+}
+
+function wireDayFilters(){
+  const wrap=document.getElementById('day-filters');
+  const allCb=wrap.querySelector('.map-day-cb-all');
+  const cbs=[...wrap.querySelectorAll('.map-day-cb')];
+  function upd(){
+    cbs.forEach(cb=>{
+      const line=cityMapState.dayLines[cb.dataset.day];if(!line)return;
+      if(allCb.checked||cb.checked){if(!cityMapState.map.hasLayer(line))line.addTo(cityMapState.map);}
+      else cityMapState.map.removeLayer(line);
+    });
+  }
+  allCb.onchange=()=>{if(allCb.checked)cbs.forEach(c=>c.checked=true);upd();};
+  cbs.forEach(cb=>cb.onchange=()=>{if(!cb.checked)allCb.checked=false;else if(cbs.every(c=>c.checked))allCb.checked=true;upd();});
+}
+
+function renderSchedule(schedule){
+  if(!schedule)return'';
+  const off=!hamarikyuOn?' is-off':'';
+  return`<div class="schedule">${schedule.map(b=>`<div class="block"><div class="block-label">${b.label}</div><ul>${b.items.map(it=>{
+    const html=it.includes('data-hama-item')?it.replace('data-hama-item',`data-hama-item class="${off.trim()}"`):it;
+    return`<li${it.includes('Hamarikyu')&&!hamarikyuOn?' class="is-off"':''}>${html}</li>`;
+  }).join('')}</ul></div>`).join('')}</div>`;
+}
+
+function renderPlaces(places){
+  const route=routePlaces({places});
+  return`<div class="places-grid">${places.map(pl=>{
+    const n=route.indexOf(pl);
+    return`<div class="place"><div class="place-photo-wrap"><img class="place-photo" src="${pl.img}" alt="" loading="lazy">${n>=0?`<div class="place-num">${n+1}</div>`:''}</div>
+    <div class="place-body"><div class="place-name">${pl.name}${pl.optional?' <span style="color:var(--text-3);font-weight:400">· опц.</span>':''}${pl.book?' <span class="tag tag-book">бронь</span>':''}</div>
+    <div class="place-jp">${pl.jp||''}</div></div></div>`;
+  }).join('')}</div>`;
+}
+
+function rebuildUI(){
+  if(fsMapId)closeMapFullscreen();
+  destroyMaps();
+  DAYS=resolveDays();
+  document.getElementById('city-map-title').textContent=`Токио · ${getVariant().label}`;
+  document.getElementById('hamarikyu-hint').textContent={
+    v1:'вар.1 → 28 сент (с teamLab) · вар.2/3 → 29 сент (после Роппонги)',
+    v2:'вар.2 → 29 сент · вар.1 → 28 сент · вар.3 → 29 сент',
+    v3:'вар.3 → 29 сент · вар.1 → 28 сент (с teamLab в тот же день)',
+  }[currentVariant]||'';
+
+  const tabsEl=document.getElementById('tabs');
+  const panelsEl=document.getElementById('panels');
+  tabsEl.innerHTML='';panelsEl.innerHTML='';
+
+  DAYS.forEach((d,i)=>{
+    const tab=document.createElement('div');
+    tab.className='tab'+(i===activeDayIdx?' active':'');
+    tab.textContent=d.tab;tab.dataset.idx=i;
+    tab.onclick=()=>selectDay(i);
+    tabsEl.appendChild(tab);
+
+    const panel=document.createElement('div');
+    panel.className='panel'+(i===activeDayIdx?' active':'');
+    panel.id='panel-'+d.id;
+    panel.innerHTML=`
+      <div class="day-header"><div class="day-date">${d.sub||''}</div><div class="day-title">${d.title}</div></div>
+      <div class="day-note">${d.note||''}</div>
+      ${renderSchedule(d.schedule)}
+      <div class="map-wrap" id="mapwrap-${d.id}">
+        <div class="map-fs-top"><span class="map-fs-title">${d.tab} · ${d.title}</span>
+          <button type="button" class="map-fs-close" aria-label="Закрыть"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+        <div class="day-map" id="map-${d.id}"></div>
+        <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-${d.id}" aria-label="Полный экран">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg></button>
+        <div class="map-actions"><a class="map-btn" id="gmap-${d.id}" href="#" target="_blank" rel="noopener">Google Maps</a></div>
+      </div>
+      <div style="font-size:10px;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">Порядок · клик на маркер</div>
+      ${renderPlaces(d.places)}`;
+    panelsEl.appendChild(panel);
+  });
+
+  setTimeout(()=>{
+    ensureDayMap(activeDayIdx);
+    if(document.getElementById('view-map').classList.contains('active'))initCityMap();
+  },50);
+}
+
+function selectDay(i){
+  if(fsMapId)closeMapFullscreen();
+  activeDayIdx=i;
+  document.querySelectorAll('.tab').forEach((t,j)=>{t.classList.toggle('active',j===i);});
+  document.querySelectorAll('.panel').forEach((p,j)=>{p.classList.toggle('active',j===i);});
+  setTimeout(()=>ensureDayMap(i),50);
+}
+
+function ensureDayMap(i){
+  const d=DAYS[i];const id=d.id;
+  if(mapInst[id]){mapInst[id].invalidateSize();return;}
+  mapInst[id]=createDayMap(id,d,DAY_COLORS[d.id]);
+}
+
+function resizeMap(id){mapInst[id]?.invalidateSize();}
+
+function openMapFullscreen(mapId){
+  const wrap=document.getElementById('mapwrap-'+mapId);
+  if(!wrap||fsMapId)return;
+  if(mapId==='city'){if(!mapInst.city)initCityMap();}else ensureDayMap(activeDayIdx);
+  fsMapId=mapId;
+  const ph=document.createComment('fs');wrap.parentNode.insertBefore(ph,wrap.nextSibling);
+  fsRestore={ph};document.body.appendChild(wrap);
+  wrap.classList.add('map-wrap--fullscreen');document.body.classList.add('map-fs-open');
+  mapInst[mapId]?.scrollWheelZoom?.enable();resizeMap(mapId);setTimeout(()=>resizeMap(mapId),100);
+}
+
+function closeMapFullscreen(){
+  if(!fsMapId)return;
+  const id=fsMapId,w=document.getElementById('mapwrap-'+id);
+  if(w){w.classList.remove('map-wrap--fullscreen');fsRestore?.ph?.parentNode?.insertBefore(w,fsRestore.ph);fsRestore?.ph?.remove();}
+  document.body.classList.remove('map-fs-open');
+  mapInst[id]?.scrollWheelZoom?.disable();fsMapId=null;fsRestore=null;setTimeout(()=>resizeMap(id),80);
+}
+
+document.addEventListener('click',e=>{
+  if(e.target.closest('.map-btn--fs')){e.preventDefault();openMapFullscreen(e.target.closest('.map-btn--fs').id.replace('fsopen-',''));}
+  if(e.target.closest('.map-fs-close')){e.preventDefault();closeMapFullscreen();}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&fsMapId)closeMapFullscreen();});
+
+document.getElementById('variant-nav').onclick=e=>{
+  const btn=e.target.closest('[data-variant]');
+  if(!btn||btn.classList.contains('active'))return;
+  document.querySelectorAll('#variant-nav .nav-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentVariant=btn.dataset.variant;activeDayIdx=0;rebuildUI();
+};
+
+document.getElementById('hamarikyu-toggle').onchange=e=>{
+  hamarikyuOn=e.target.checked;rebuildUI();
+};
+
+document.querySelectorAll('[data-view]').forEach(btn=>{
+  btn.onclick=()=>{
+    if(btn.classList.contains('active'))return;
+    if(fsMapId)closeMapFullscreen();
+    document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const v=btn.dataset.view;
+    document.getElementById('view-route').classList.toggle('active',v==='route');
+    document.getElementById('view-map').classList.toggle('active',v==='map');
+    if(v==='map')setTimeout(()=>{if(!mapInst.city)initCityMap();else resizeMap('city');},80);
+  };
+});
+
+rebuildUI();
+</script>
+</body>
+</html>
