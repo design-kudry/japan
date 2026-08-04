@@ -83,11 +83,9 @@ const DAYS=[
  note:'Прилёт в 12:40 — лёгкий день, гуляем вечером',
  transit:[
   {icon:'plane',route:'Прилёт · Аэропорт Кансай',detail:'12:40 · регистрация, заселение',cost:''},
-  {icon:'train',route:'Кансай → Осака',detail:'IC-карта',cost:'¥1,200–1,900'},
-  {icon:'metro',route:'Осака, местные (17–18 сент)',detail:'IC-карта',cost:'¥1,500–2,500'},
  ],
  places:[
-  {n:1,name:'Namba Yasaka Shrine',jp:'難波八阪神社',desc:'Огромная голова льва-алтарь — самая фотогеничная святыня Осаки.',price:'Бесплатно',hours:'24/7',img:P.namba_yasaka,lat:34.6566,lng:135.5009},
+  {n:1,name:'Namba Yasaka Shrine',jp:'難波八阪神社',desc:'Огромная голова льва-алтарь — самая фотогеничная святыня Осаки.',price:'Бесплатно',hours:'06:30–17:00',img:P.namba_yasaka,lat:34.6566,lng:135.5009},
   {n:2,name:'Dotonbori',jp:'道頓堀',desc:'Главная гастро-улица Осаки: такояки, рамен, огромная вывеска Glico над каналом.',price:'Бесплатно',hours:'24/7',img:P.dotonbori,lat:34.6687,lng:135.5012},
   {n:3,name:'Amerikamura',jp:'アメリカ村',desc:'Молодёжный квартал в стиле США: винтаж, стрит-арт, уличная еда.',price:'Бесплатно',hours:'',img:P.amerikamura,lat:34.6720,lng:135.4981},
   {n:4,name:'Shinsaibashi-suji',jp:'心斎橋筋商店街',desc:'Самая известная крытая торговая галерея Осаки — 600 м брендов и кафе.',price:'Бесплатно',hours:'10:00–22:00',img:P.shinsaibashi,lat:34.6736,lng:135.4980},
