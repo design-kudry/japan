@@ -296,8 +296,17 @@ const SHOP_CAT_COLORS={
   vintage:'#6A1B9A',concept:'#1565C0',boutiques:'#2E7D32',
   beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',
 };
+const CITY_GMAPS={
+  osaka:'https://maps.app.goo.gl/YjYyPXe4Nh9GiQCG8',
+  tokyo:'https://maps.app.goo.gl/D4BgcHg8GppvbyN76',
+  kyoto:'https://maps.app.goo.gl/D4BgcHg8GppvbyN76',
+  nara:'https://maps.app.goo.gl/D4BgcHg8GppvbyN76',
+  kamakura:'https://maps.app.goo.gl/D4BgcHg8GppvbyN76',
+  fuji:'https://maps.app.goo.gl/mMKZMCUfc52VZe1w7',
+};
 
-const SHOP_CATEGORIES=[
+const SHOPS_BY_CITY={
+tokyo:[
   {id:'vintage',title:'Винтаж и ресейл',jp:'ヴィンテージ',
   shops:[
     {id:'amore_vintage',name:'AMORE Vintage AOYAMA',jp:'アモーレヴィンテージ',desc:'Люксовый винтаж-бутик — Chanel, Hermès, архивные коллекции.',area:'Jingumae · Аояма',address:'Jingumae 5-1-6, 2F',lat:35.6645,lng:139.7064,img:imgPath('AMORE Vintage AOYAMA.jpg')},
@@ -348,7 +357,18 @@ const SHOP_CATEGORIES=[
     {id:'beams',name:'BEAMS Harajuku',jp:'ビームス',desc:'Культовый флагман BEAMS в Харадзюку — streetwear и heritage.',area:'Jingumae · Harajuku',address:'Jingumae 3-24-7, 1F-2F',lat:35.6704,lng:139.7108,img:imgPath('BEAMS Harajuku.png')},
     {id:'kith',name:'Kith Tokyo',jp:'キス',desc:'Флагман Kith в Miyashita Park — кроссовки, одежда, коллаборации.',area:'Jingumae · Miyashita Park',address:'Jingumae 6-20-10, Miyashita Park North 1-2F',lat:35.6636,lng:139.7022,img:imgPath('Kith -Tokyo.png')},
   ]},
-];
+],
+osaka:[
+  {id:'vintage',title:'Винтаж и ресейл',jp:'ヴィンテージ',
+  shops:[
+    {id:'hedy_osaka',name:'Hedy Vintage shop Osaka',jp:'ヘディー',desc:'Кураторский люкс-винтаж в Minamihorie — отбор мировых брендов, tax-free.',area:'Minamihorie · Nishi',address:'Minamihorie 1-14-2',lat:34.6699,lng:135.4973,img:imgPath('Hedy Vintage shop Osaka.png')},
+    {id:'authentic_experts',name:'Authentic Experts',jp:'オーセンティックエキスパーツ',desc:'Винтаж и ресейл в Minamisenba — кураторский отбор одежды и аксессуаров.',area:'Minamisenba · Chuo',address:'Minamisenba 3-8-15, 1F',lat:34.6762,lng:135.5028,img:imgPath('Authentic Experts.png')},
+    {id:'soar_osaka',name:'Soar Shop Osaka',jp:'ソア',desc:'Винтаж у Shinsaibashi — одежда и streetwear на втором этаже.',area:'Shinsaibashi · Chuo',address:'Nishishinsaibashi 1-6-23, 2F',lat:34.6710,lng:135.5005,img:imgPath('Soar Shop Osaka.png')},
+    {id:'popeye_osaka',name:'POPEYE vintage used clothing',jp:'ポパイ',desc:'Used & vintage у Nakazaki — одежда у Umeda / Kita.',area:'Nakazaki · Kita',address:'Nakazakinishi 3-1-10',lat:34.7082,lng:135.5108,img:imgPath('POPEYE vintage used clothing.png')},
+  ]},
+],
+};
+const SHOP_CATEGORIES=SHOPS_BY_CITY.tokyo;
 const EXTRA_PLACES={
   osaka:[
     {name:'Katsuoji Temple',jp:'勝尾寺',desc:'Храм «победы» в горах Миноо — тысячи красных дарума, сады и вид на осенние клёны',price:'¥500 · 228 ₽',hours:'8:00–17:00',img:P.katsuoji,lat:34.8656,lng:135.4923},

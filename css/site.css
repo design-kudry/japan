@@ -249,6 +249,64 @@ body.mode-places #panel-places{display:flex}
 .places-subnav{
   display:flex;gap:4px;margin-bottom:28px;
 }
+.places-subnav--cities{margin-bottom:24px;flex-wrap:wrap}
+.places-subnav--cities .places-city-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.places-city-select-wrap{display:none;width:100%;max-width:var(--content-w);position:relative}
+.places-city-select{
+  appearance:none;-webkit-appearance:none;
+  width:100%;
+  padding:12px 40px 12px 14px;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:15px;font-weight:600;
+  color:var(--text-1);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  cursor:pointer;
+  letter-spacing:-0.3px;
+}
+.places-city-select:focus{outline:none;border-color:var(--text-1)}
+.places-city-select-wrap::after{
+  content:"";
+  position:absolute;right:14px;top:50%;
+  width:8px;height:8px;
+  border-right:1.5px solid var(--text-2);
+  border-bottom:1.5px solid var(--text-2);
+  transform:translateY(-60%) rotate(45deg);
+  pointer-events:none;
+}
+@media (max-width:640px){
+  .places-subnav--cities .places-city-tabs{display:none}
+  .places-city-select-wrap{display:block}
+}
+.places-subnav--tokyo{margin:0 0 24px;flex-wrap:wrap}
+.places-city-view{display:none;width:100%;max-width:none}
+.places-city-view--active{display:block}
+.places-city-view[data-city="tokyo"] .tokyo-panel,
+.places-city-view[data-city="osaka"] .tokyo-panel{display:none}
+.places-city-view[data-city="tokyo"].tokyo-mode-all .tokyo-panel--all{display:block}
+.places-city-view[data-city="osaka"].tokyo-mode-all .tokyo-panel--all{display:block}
+.places-city-view[data-city="tokyo"].tokyo-mode-sights .tokyo-panel--sights,
+.places-city-view[data-city="osaka"].tokyo-mode-sights .tokyo-panel--sights{display:block}
+.places-city-view[data-city="tokyo"].tokyo-mode-shops .tokyo-panel--shops,
+.places-city-view[data-city="osaka"].tokyo-mode-shops .tokyo-panel--shops{display:block}
+.places-city-view[data-city="tokyo"] .tokyo-panel > .city-title,
+.places-city-view[data-city="tokyo"] .tokyo-city-head,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .section-label,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .map-wrap,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .places-grid,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .shop-category-title,
+.places-city-view[data-city="tokyo"] .tokyo-panel .shop-category,
+.places-city-view[data-city="osaka"] .tokyo-panel > .city-title,
+.places-city-view[data-city="osaka"] .tokyo-city-head,
+.places-city-view[data-city="osaka"] .tokyo-panel > .section-label,
+.places-city-view[data-city="osaka"] .tokyo-panel > .map-wrap,
+.places-city-view[data-city="osaka"] .tokyo-panel > .places-grid,
+.places-city-view[data-city="osaka"] .tokyo-panel > .shop-category-title,
+.places-city-view[data-city="osaka"] .tokyo-panel .shop-category{
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
 .places-subtab{
   padding:7px 14px;
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;

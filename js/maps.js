@@ -8,9 +8,13 @@ function ensureMapReady(mapId){
   if(mapInst[mapId])return;
   const s=String(mapId);
   if(/^\d+$/.test(s))initMap(+s);
-  else if(s==='city-shops')initShopsMap();
+  else if(s==='city-shops')initShopsMap('tokyo');
+  else if(s==='city-osaka-shops')initShopsMap('osaka');
+  else if(s==='city-tokyo-all')initCityAllMap('tokyo');
+  else if(s==='city-osaka-all')initCityAllMap('osaka');
   else if(s.startsWith('city-')){
     const regionId=s.slice(5);
+    if(regionId.endsWith('-all')||regionId.endsWith('-shops'))return;
     const items=buildPlacesCatalog()[regionId];
     if(items?.length)initCityMap(regionId,items);
   }
@@ -164,7 +168,7 @@ function initCityMap(regionId,places){
   fitMapToPoints(map,pts,regionId,0.22);
   setTimeout(()=>map.invalidateSize(),0);
   const gmap=document.getElementById('gmap-'+mapId);
-  if(gmap)gmap.href=buildGmapsCenterUrl(pts);
+  if(gmap)gmap.href=CITY_GMAPS[regionId]||buildGmapsCenterUrl(pts);
   mapInst[mapId]=map;
   cityMapState[regionId]={map,dayLines};
   wireDayFilters(regionId);
@@ -205,19 +209,21 @@ function wireDayFilters(regionId){
   });
 }
 
-function initShopsMap(){
-  const mapId='city-shops';
+function initShopsMap(city='tokyo'){
+  const mapId=city==='tokyo'?'city-shops':'city-'+city+'-shops';
+  const filtersId=city==='tokyo'?'shop-cat-filters':city+'-shop-cat-filters';
+  const allCbId=city==='tokyo'?'shop-cb-all':city+'-shop-cb-all';
   if(mapInst[mapId])return;
   const el=document.getElementById('map-'+mapId);
-  const allShops=getAllShops().filter(s=>s.lat);
+  const allShops=getAllShops(city).filter(s=>s.lat);
   if(!el||!allShops.length)return;
 
-  const filtersEl=document.getElementById('shop-cat-filters');
-  const catsWithCoords=SHOP_CATEGORIES.filter(c=>c.shops.some(s=>s.lat));
+  const filtersEl=document.getElementById(filtersId);
+  const catsWithCoords=getShopCategories(city).filter(c=>c.shops.some(s=>s.lat));
   if(filtersEl){
     filtersEl.innerHTML=`
       <label class="map-day-filter map-day-filter--all">
-        <input type="checkbox" id="shop-cb-all" checked> Все
+        <input type="checkbox" id="${allCbId}" checked> Все
       </label>
       ${catsWithCoords.map(c=>`
       <label class="map-day-filter">
@@ -252,17 +258,15 @@ function initShopsMap(){
     markersByCat[s.catId].push(marker);
   });
 
-  addStayMarkers(map,'tokyo');
-  fitMapToPoints(map,allShops,'tokyo',0.15);
+  addStayMarkers(map,city);
+  fitMapToPoints(map,allShops,city,0.15);
   setTimeout(()=>map.invalidateSize(),0);
-  const gmap=document.getElementById('gmap-'+mapId);
-  if(gmap)gmap.href=buildGmapsCenterUrl(allShops);
   mapInst[mapId]=map;
   shopMapState.map=map;
   shopMapState.markersByCat=markersByCat;
 
   if(!filtersEl)return;
-  const allCb=filtersEl.querySelector('#shop-cb-all');
+  const allCb=filtersEl.querySelector('#'+allCbId);
   const catCbs=[...filtersEl.querySelectorAll('.shop-cb-cat')];
   function updateMarkers(){
     const showAll=allCb.checked;
@@ -287,6 +291,66 @@ function initShopsMap(){
     });
   });
 }
+
+function initCityAllMap(city){
+  const mapId='city-'+city+'-all';
+  if(mapInst[mapId])return;
+  const el=document.getElementById('map-'+mapId);
+  const places=(buildPlacesCatalog()[city]||[]).filter(p=>p.lat);
+  const allShops=getAllShops(city).filter(s=>s.lat);
+  if(!el||(!places.length&&!allShops.length))return;
+
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+
+  (regionDayRoutes[city]||[]).forEach(dr=>{
+    if(dr.places.length<2)return;
+    const color=DAY_ROUTE_COLORS[dr.dayIdx%DAY_ROUTE_COLORS.length];
+    L.polyline(dr.places.map(p=>[p.lat,p.lng]),{
+      color,weight:2.5,opacity:0.75,dashArray:'6,5',
+    }).addTo(map);
+  });
+
+  places.forEach(pl=>{
+    const offCls=pl.offRoute?' photo-marker--off-route':'';
+    const html=`<div class="photo-marker${offCls}" title="${pl.name}">
+      <img src="${pl.img}" alt="" loading="lazy"
+        onerror="this.style.display='none';this.parentNode.style.background='#888'">
+    </div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
+      <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+      <div class="popup-name">${pl.name}</div>
+      <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
+    `);
+  });
+
+  allShops.forEach(s=>{
+    const color=SHOP_CAT_COLORS[s.catId]||'#111110';
+    const imgHtml=s.img
+      ?`<img src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
+      :'';
+    const html=`<div class="photo-marker" style="border-color:${color}" title="${s.name}">${imgHtml}</div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const addr=s.address?`<div class="popup-sub">${s.address}</div>`:'';
+    const maps=shopMapsLink(s);
+    L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`
+      ${s.img?`<img class="popup-img" src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+      <div class="popup-name">${s.name}</div>
+      <div class="popup-sub">${s.jp||''}${s.area?' · '+s.area:''}</div>
+      ${addr}
+      ${maps?`<a class="place-meta-link" style="display:block;margin-top:8px" href="${maps}" target="_blank" rel="noopener">Google Maps</a>`:''}
+    `);
+  });
+
+  addStayMarkers(map,city);
+  fitMapToPoints(map,[...places,...allShops],city,0.12);
+  setTimeout(()=>map.invalidateSize(),0);
+  mapInst[mapId]=map;
+}
+
+function initTokyoAllMap(){initCityAllMap('tokyo');}
 
 function initAllCityMaps(){
   REGIONS.forEach(r=>{

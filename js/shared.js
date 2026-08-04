@@ -1,7 +1,11 @@
-function getAllShops(){
+function getShopCategories(city='tokyo'){
+  return SHOPS_BY_CITY[city]||[];
+}
+
+function getAllShops(city='tokyo'){
   const out=[];
-  SHOP_CATEGORIES.forEach(cat=>{
-    cat.shops.forEach(s=>out.push({...s,catId:cat.id,catTitle:cat.title}));
+  getShopCategories(city).forEach(cat=>{
+    cat.shops.forEach(s=>out.push({...s,catId:cat.id,catTitle:cat.title,city}));
   });
   return out;
 }
@@ -109,14 +113,23 @@ function renderDayFilters(regionId){
   </div>`;
 }
 
-function renderShopsMap(mappedCount){
+function renderMapGmapsBtn(id,href){
+  if(href===false)return'';
+  return`<div class="map-actions">
+        <a class="map-btn" id="gmap-${id}" href="${href||'#'}" target="_blank" rel="noopener">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Maps
+        </a>
+      </div>`;
+}
+
+function renderShopsMap(mappedCount,{id='city-shops',title='Магазины · Токио',filtersId='shop-cat-filters'}={}){
   const loc=mappedCount===1?'магазин':mappedCount<5?'магазина':'магазинов';
-  const id='city-shops';
   return`<div class="section-label">${mappedCount} ${loc} на карте</div>
     <div class="map-wrap" id="mapwrap-${id}">
-      <div class="map-day-filters" id="shop-cat-filters"></div>
+      <div class="map-day-filters" id="${filtersId}"></div>
       <div class="map-fs-top">
-        <span class="map-fs-title">Магазины · Токио</span>
+        <span class="map-fs-title">${title}</span>
         <button type="button" class="map-fs-close" id="fsclose-${id}" aria-label="Закрыть карту">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
@@ -125,39 +138,38 @@ function renderShopsMap(mappedCount){
       <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-${id}" aria-label="На весь экран">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
       </button>
-      <div class="map-actions">
-        <a class="map-btn" id="gmap-${id}" href="#" target="_blank" rel="noopener">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Google Maps
-        </a>
-      </div>
     </div>`;
 }
 
+function renderShopCategories(city='tokyo'){
+  return getShopCategories(city).map(cat=>`
+  <div class="shop-category" id="shops-${city}-${cat.id}">
+    <h3 class="shop-category-title">${cat.title}${cat.jp?` <span class="shop-category-jp jp">${cat.jp}</span>`:''}</h3>
+    <div class="places-grid">${cat.shops.map(s=>{
+      const maps=shopMapsLink(s);
+      return renderPlaceCard({
+        name:s.name,jp:s.jp,desc:s.desc,
+        link:maps,urlLabel:s.urlLabel||(maps?'Google Maps':null),
+        img:s.img,area:s.area
+      },false);
+    }).join('')}</div>
+  </div>`).join('');
+}
+
 function renderShopsSection(){
-  const mapped=getAllShops().filter(s=>s.lat);
+  const mapped=getAllShops('tokyo').filter(s=>s.lat);
   return`<div id="places-shops" class="places-view">
     <div class="city-section" id="city-shops">
       <h2 class="city-title">Магазины <span class="city-title-jp jp">ショップ</span></h2>
       ${mapped.length?renderShopsMap(mapped.length):''}
-      ${SHOP_CATEGORIES.map(cat=>`
-      <div class="shop-category" id="shops-${cat.id}">
-        <h3 class="shop-category-title">${cat.title}${cat.jp?` <span class="shop-category-jp jp">${cat.jp}</span>`:''}</h3>
-        <div class="places-grid">${cat.shops.map(s=>{
-          const maps=shopMapsLink(s);
-          return renderPlaceCard({
-            name:s.name,jp:s.jp,desc:s.desc,
-            link:maps,urlLabel:s.urlLabel||(maps?'Google Maps':null),
-            img:s.img,area:s.area
-          },false);
-        }).join('')}</div>
-      </div>`).join('')}
+      ${renderShopCategories('tokyo')}
     </div>
   </div>`;
 }
 
-function renderCityMap(id,title,count,regionId){
+function renderCityMap(id,title,count,regionId,{gmaps}={}){
   const loc=count===1?'место':count<5?'места':'мест';
+  const gmapsHref=gmaps===false?false:(typeof gmaps==='string'?gmaps:(regionId&&CITY_GMAPS[regionId])||false);
   return`<div class="section-label">${count} ${loc}</div>
     <div class="map-wrap" id="mapwrap-${id}">
       ${renderDayFilters(regionId)}
@@ -171,12 +183,7 @@ function renderCityMap(id,title,count,regionId){
       <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-${id}" aria-label="На весь экран">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
       </button>
-      <div class="map-actions">
-        <a class="map-btn" id="gmap-${id}" href="#" target="_blank" rel="noopener">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Google Maps
-        </a>
-      </div>
+      ${renderMapGmapsBtn(id,gmapsHref)}
     </div>`;
 }
 
