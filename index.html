@@ -285,7 +285,6 @@ body.mode-places #panel-places{display:flex}
 .places-subnav--cities{margin-bottom:24px;flex-wrap:wrap}
 .places-subnav--tokyo{margin:0 0 24px;flex-wrap:wrap}
 .places-city-view[data-city="tokyo"] .tokyo-city-head{margin-bottom:16px}
-.places-city-view[data-city="tokyo"].tokyo-mode-sights .tokyo-section-head{display:none}
 .places-city-view{display:none;width:100%;max-width:none}
 .places-city-view--active{display:block}
 .places-city-view--active > .city-title,
@@ -304,6 +303,7 @@ body.mode-places #panel-places{display:flex}
 .places-city-view[data-city="tokyo"] .tokyo-panel > .section-label,
 .places-city-view[data-city="tokyo"] .tokyo-panel > .map-wrap,
 .places-city-view[data-city="tokyo"] .tokyo-panel > .places-grid,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .shop-category-title,
 .places-city-view[data-city="tokyo"] .tokyo-panel .shop-category{
   width:var(--content-w);
   max-width:calc(100vw - var(--viewport-pad));
@@ -1459,18 +1459,17 @@ function renderCityPlacesSection(r,items,isFirst){
       </div>
       <div class="tokyo-panel tokyo-panel--all">
         ${renderCityMap('city-tokyo-all','Токио',totalOnMap,null)}
-        <h2 class="city-title tokyo-section-head">Достопримечательности <span class="city-title-jp jp">スポット</span></h2>
+        <h3 class="shop-category-title tokyo-section-head">Достопримечательности <span class="shop-category-jp jp">スポット</span></h3>
         <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
-        <div class="section-label" style="margin-top:32px">магазины</div>
         ${renderTokyoShopsCategoriesOnly()}
       </div>
       <div class="tokyo-panel tokyo-panel--sights">
         ${renderCityMap('city-tokyo',r.name,items.length,'tokyo')}
+        <h3 class="shop-category-title">Достопримечательности <span class="shop-category-jp jp">スポット</span></h3>
         <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
       </div>
       <div class="tokyo-panel tokyo-panel--shops">
         ${renderShopsMap(mapped.length)}
-        <h2 class="city-title tokyo-section-head">Магазины <span class="city-title-jp jp">ショップ</span></h2>
         ${renderTokyoShopsCategoriesOnly()}
       </div>
     </div>`;
@@ -1563,6 +1562,11 @@ function buildPlacesCatalog(){
 const tabsEl=document.getElementById('tabs');
 const panelsEl=document.getElementById('panels');
 let currentView='route';
+let scrollLock=false;
+let scrollLockTimer=null;
+let currentActive=0;
+let fsMapId=null;
+let fsRestore=null;
 
 const placesCatalog=buildPlacesCatalog();
 const placesPanel=document.createElement('div');
@@ -1740,7 +1744,7 @@ function syncPlacesHash(city,tokyoView){
 function enterPlacesView(){
   if(currentView==='places')return;
   currentView='places';
-  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.remove('mode-route','mode-places','mode-expenses');
   document.body.classList.add('mode-places');
   document.querySelectorAll('.view-btn,.mobile-menu-item').forEach(b=>{
     b.classList.toggle('active',b.dataset.view==='places');
@@ -1814,7 +1818,7 @@ function applyHash(){
 function enterRouteView({skipScroll=false}={}){
   const wasRoute=currentView==='route';
   currentView='route';
-  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.remove('mode-route','mode-places','mode-expenses');
   document.body.classList.add('mode-route');
   document.querySelectorAll('.view-btn,.mobile-menu-item').forEach(b=>{
     b.classList.toggle('active',b.dataset.view==='route');
@@ -1842,14 +1846,7 @@ function applyRouteHash(){
   scrollToDay(i,{skipHash:true});
 }
 
-initPlacesCityNav();
-if(!location.hash)history.replaceState(null,'','#day/17');
-applyHash();
-
 // ─── MAP INIT ──────────────────────────
-let fsMapId=null;
-let fsRestore=null;
-
 function ensureMapReady(mapId){
   if(mapInst[mapId])return;
   const s=String(mapId);
@@ -2279,10 +2276,6 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.body.classList.contains('menu-open'))closeMobileMenu();
 });
 
-let scrollLock=false;
-let scrollLockTimer=null;
-let currentActive=0;
-
 function stickyOffset(){
   const nav=document.querySelector('.view-nav')?.offsetHeight||49;
   if(currentView!=='route')return nav;
@@ -2311,7 +2304,7 @@ function toggleMobileMenu(){
 
 function setView(mode,{skipScroll=false}={}){
   currentView=mode;
-  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.remove('mode-route','mode-places','mode-expenses');
   document.body.classList.add(
     mode==='places'?'mode-places':mode==='expenses'?'mode-expenses':'mode-route'
   );
@@ -2423,6 +2416,9 @@ const mapObserver=new IntersectionObserver(entries=>{
 },{rootMargin:'240px 0px'});
 document.querySelectorAll('.panel[id^="panel-"]:not(#panel-places)').forEach(p=>mapObserver.observe(p));
 
+initPlacesCityNav();
+if(!location.hash)history.replaceState(null,'','#day/17');
+applyHash();
 setTimeout(()=>initMap(0),120);
 </script>
 </body>
