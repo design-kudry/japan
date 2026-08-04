@@ -1,6 +1,7 @@
 japan-trip.html
 .DS_Store
 .claude/
+.venv-img/
 
 # specs & local planning (not for git)
 places-spec.txt
