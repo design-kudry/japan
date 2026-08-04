@@ -205,6 +205,7 @@ body.mode-route #panel-places{display:none}
   transition:all .15s ease;
   white-space:nowrap;user-select:none;
   letter-spacing:-0.3px;
+  text-decoration:none;
 }
 .tab.active{
   color:#fff;font-weight:600;
@@ -272,6 +273,8 @@ body.mode-places #panel-places{display:flex}
   background:transparent;
   transition:all .15s ease;
   letter-spacing:-0.3px;
+  text-decoration:none;
+  display:inline-block;
 }
 .places-subtab.active{
   color:#fff;font-weight:600;
@@ -279,10 +282,43 @@ body.mode-places #panel-places{display:flex}
   border-color:var(--text-1);
 }
 .places-subtab:hover:not(.active){color:var(--text-1);background:var(--surface-dim)}
-.places-view{display:none;width:100%;max-width:none}
-.places-view--active{display:block}
-#places-cities.places-view--active{display:contents}
-#places-shops.places-view--active{display:contents}
+.places-subnav--cities{margin-bottom:24px;flex-wrap:wrap}
+.places-subnav--tokyo{margin:0 0 24px;flex-wrap:wrap}
+.places-city-view[data-city="tokyo"] .tokyo-city-head{margin-bottom:16px}
+.places-city-view[data-city="tokyo"].tokyo-mode-sights .tokyo-section-head{display:none}
+.places-city-view{display:none;width:100%;max-width:none}
+.places-city-view--active{display:block}
+.places-city-view--active > .city-title,
+.places-city-view--active > .section-label,
+.places-city-view--active > .map-wrap,
+.places-city-view--active > .places-grid{
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
+.places-city-view[data-city="tokyo"] .tokyo-panel{display:none}
+.places-city-view[data-city="tokyo"].tokyo-mode-all .tokyo-panel--all{display:block}
+.places-city-view[data-city="tokyo"].tokyo-mode-sights .tokyo-panel--sights{display:block}
+.places-city-view[data-city="tokyo"].tokyo-mode-shops .tokyo-panel--shops{display:block}
+.places-city-view[data-city="tokyo"] .tokyo-panel > .city-title,
+.places-city-view[data-city="tokyo"] .tokyo-city-head,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .section-label,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .map-wrap,
+.places-city-view[data-city="tokyo"] .tokyo-panel > .places-grid,
+.places-city-view[data-city="tokyo"] .tokyo-panel .shop-category{
+  width:var(--content-w);
+  max-width:calc(100vw - var(--viewport-pad));
+}
+.shop-category{margin-bottom:36px}
+.shop-category:last-child{margin-bottom:0}
+.shop-category-title{
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:20px;font-weight:700;color:var(--text-1);
+  line-height:1.15;margin:0 0 16px;letter-spacing:-0.4px;
+}
+.shop-category-jp{
+  font-weight:400;color:var(--text-3);font-size:13px;
+  margin-left:6px;letter-spacing:0;
+}
 .city-title{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size:28px;font-weight:700;
@@ -1151,11 +1187,77 @@ const STAYS={
   }],
 };
 
-const SHOPS=[
-  {id:'donki',name:'Don Quijote',jp:'ドン・キホーテ',desc:'Дискаунтер на любой случай — сувениры, косметика, снеки, электроника, tax-free.',url:'https://www.donki.com/en/',urlLabel:'donki.com',img:imgPath('Don Quijote.jpg')},
-  {id:'muji',name:'MUJI',jp:'無印良品',desc:'Минималистичные вещи для дома, одежды, канцелярии и путешествий.',url:'https://www.muji.eu/',urlLabel:'muji.eu',img:imgPath('MUJI.jpg')},
-  {id:'atmos',name:'atmos',jp:'アトモス',desc:'Кроссовки и стритвир — японские релизы, коллаборации и лимитированные дропы.',url:'https://www.atmos-tokyo.com/',urlLabel:'atmos-tokyo.com',img:imgPath('atmos.jpg')},
+const SHOP_CAT_COLORS={
+  vintage:'#6A1B9A',concept:'#1565C0',boutiques:'#2E7D32',
+  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',
+};
+
+const SHOP_CATEGORIES=[
+  {id:'vintage',title:'Винтаж и ресейл',jp:'ヴィンテージ',
+  shops:[
+    {id:'amore_vintage',name:'AMORE Vintage AOYAMA',jp:'アモーレヴィンテージ',desc:'Люксовый винтаж-бутик — Chanel, Hermès, архивные коллекции.',area:'Jingumae · Аояма',address:'Jingumae 5-1-6, 2F',lat:35.6645,lng:139.7064,img:imgPath('AMORE Vintage AOYAMA.jpg')},
+    {id:'vintage_qoo',name:'Vintage QOO',jp:'ヴィンテージQOO',desc:'Аутентичный винтаж до 2000-х — одежда, аксессуары, японские и западные бренды.',area:'Jingumae · Аояма',address:'Jingumae 5-2-6, B1F-2F',lat:35.6648,lng:139.7068,img:imgPath('Vintage QOO.jpg')},
+    {id:'paradise',name:'Paradise Vintage',jp:'パラダイスヴィンテージ',desc:'Кураторский винтаж в Харадзюку — одежда и аксессуары.',area:'Jingumae · Аояма',address:'Jingumae 6-6-2, 2F',lat:35.6661,lng:139.7041,img:imgPath('Paradise vintage .jpg')},
+    {id:'mixthinks',name:'MixTHINKS Harajuku',jp:'ミックスシンクス',desc:'Винтаж и streetwear в двух этажах у Omotesando.',area:'Harajuku · Аояма',address:'Jingumae 6-28-6, 1F-2F',lat:35.6652,lng:139.7018,img:imgPath('MixTHINKS Harajuku Store.png')},
+    {id:'ragtag',name:'RAGTAG Shibuya',jp:'ラグタグ',desc:'Ресейл и винтаж люксовых домов — архивная одежда, обувь, аксессуары.',area:'Сибуя',address:'Jinnan 1-17-7',lat:35.6635,lng:139.7002,img:imgPath('RAGTAG Shibuya.jpg')},
+    {id:'oedo_market',name:'OEDO Antique Market',jp:'大江戸骨董市',desc:'Антикварный рынок под открытым небом — проходит 2 раза в неделю (сб/вс).',area:'Marunouchi',address:'Marunouchi 3-5-5',lat:35.6770,lng:139.7635,img:imgPath('OEDO Antique Market.jpg')},
+    {id:'brand_off',name:'Brand Off Tokyo',jp:'ブランドオフ',desc:'Люкс-аксессуары, сумки, часы, одежда с сертификатами проверки.',area:'Гинза',address:'Ginza 5-5-9, 1F-4F',lat:35.6701,lng:139.7655,img:imgPath('Brand Off Tokyo.png')},
+    {id:'brand_collect',name:'Brand Collect',jp:'ブランドコレクト',desc:'Люкс и streetwear винтаж у Miyashita Park.',area:'Сибуя',address:'Jinnan 1-9-2, 1F',lat:35.6648,lng:139.7025,img:imgPath('Brand Collect.png')},
+    {id:'casanova',name:'CASANOVA vintage',jp:'カサノバ',desc:'Винтаж у T\'s Omotesando — кураторский отбор улицы Omotesando.',area:'Jingumae · Omotesando',address:'Jingumae 5-11-6, T\'s Omotesando 1F',lat:35.6659,lng:139.7090,img:imgPath('CASANOVA vintage.png')},
+    {id:'brand_collect_vintage',name:'BRAND COLLECT VINTAGE',jp:'ブランドコレクト',desc:'Флагманский винтаж Omotesando — 3 мин от Omotesando Hills.',area:'Jingumae · Omotesando',address:'Jingumae 4-3-21, Nodera Bldg 1F',lat:35.6671,lng:139.7106,img:imgPath('BRAND COLLECT VINTAGE.png')},
+  ]},
+  {id:'boutiques',title:'Бутики / бренды',jp:'ブティック',
+  shops:[
+    {id:'uniqlo_ginza',name:'Uniqlo Ginza',jp:'ユニクロ銀座',desc:'Флагман на 12 этажей — полная линейка, UT, кастомизация, tax-free.',area:'Гинза',address:'Ginza 6-9-5, 1F-12F',lat:35.6693,lng:139.7644,img:imgPath('Uniqlo Ginza.jpg')},
+    {id:'muji_ginza',name:'MUJI Ginza',jp:'無印良品銀座',desc:'10 этажей MUJI + MUJI HOTEL — одежда, дом, еда, кафе, флагманский опыт бренда.',url:'https://www.muji.com/jp',urlLabel:'muji.com',img:imgPath('MUJI.jpg'),area:'Гинза'},
+    {id:'gentle_monster',name:'Gentle Monster Aoyama',jp:'ジェントルモンスター',desc:'Концептуальный бутик-инсталляция — очки Gentle Monster.',area:'Minamiaoyama',address:'Minamiaoyama 5-3-2, 1F-2F',lat:35.6623,lng:139.7135,img:imgPath('Gentle Monster .jpg')},
+    {id:'cdg_aoyama',name:'Comme des Garcons Aoyama',jp:'コムデギャルソン',desc:'Двухэтажное флагманское пространство — основные линии CDG.',area:'Minamiaoyama',address:'Minamiaoyama 5-2-1',lat:35.6630,lng:139.7128,img:imgPath('Comme des Garcons Aoyama.jpg')},
+    {id:'itoya',name:'Itoya Ginza',jp:'伊東屋',desc:'Флагманский 12-этажный магазин канцелярии с 1904 года — G. Itoya и K. Itoya.',area:'Гинза',address:'Ginza 2-7-15',lat:35.6730,lng:139.7674,img:imgPath('Itoya Ginza.jpg')},
+    {id:'yello_fitting',name:'YELLO FITTING SALON',jp:'イエロー',desc:'Фitting salon бренда YELLO в Харадзюку — примерка и покупка культовой японской обуви.',area:'Jingumae · Харадзюку',address:'Jingumae 6-8-5, AI Bldg 2F',lat:35.6659,lng:139.7046,img:imgPath('YELLO FITTING SALON.png')},
+    {id:'donki',name:'Don Quijote',jp:'ドン・キホーテ',desc:'Дискаунтер на любой случай — сувениры, косметика, снеки, электроника, tax-free.',url:'https://www.donki.com/en/',urlLabel:'donki.com',img:imgPath('Don Quijote.jpg'),area:'Сибуя',address:'Udagawacho 28-6',lat:35.6604,lng:139.6978},
+  ]},
+  {id:'beauty',title:'Красота / уход',jp:'ビューティ',
+  shops:[
+    {id:'refa',name:'REFA Ginza',jp:'リファ',desc:'Японские бьюти-гаджеты ReFa — массажёры для лица и тела, уходовая электроника.',area:'Гинза',address:'Ginza 7-9-15, GINZA gCUBE',lat:35.6687,lng:139.7628,img:imgPath('REFA Ginza.png')},
+    {id:'matsukiyo',name:'Matsumoto Kiyoshi Ginza',jp:'マツモトキヨシ',desc:'Аптека Matsumoto Kiyoshi в Гинзе — японская косметика, tax-free.',area:'Гинза',address:'Ginza 5-5-1',lat:35.6720,lng:139.7647,img:imgPath('Matsumoto Kiyoshi Ginza.png')},
+    {id:'tamburins',name:'TAMBURINS AOYAMA',jp:'タンバリンズ',desc:'Магазин парфюмерии Tamburins — The Jewels of Aoyama.',area:'Minamiaoyama',address:'Minamiaoyama 5-3-2, The Jewels of Aoyama 105',lat:35.6623,lng:139.7135,img:imgPath('Tamburins Aoyama.png')},
+  ]},
+  {id:'sneakers',title:'Обувь / кроссовки',jp:'スニーカー',
+  shops:[
+    {id:'onitsuka',name:'Onitsuka Tiger Shibuya',jp:'オニツカタイガー',desc:'Флагман в Сибуе — Mexico 66, японские релизы и коллаборации.',area:'Сибуя',address:'Jinnan 1-21-3, Shibuya Jinnan Bldg 1-2F',lat:35.6614,lng:139.7006,img:imgPath('Onitsuka Tiger Shibuya.png')},
+    {id:'abc_mart',name:'ABC-MART Shibuya',jp:'エービーシーマート',desc:'Крупный флагман у центра Сибуи — сникеры, японские и мировые бренды.',area:'Сибуя',address:'Udagawacho 27-6, Shibuya T Bldg.',lat:35.6621,lng:139.6975,img:imgPath('ABC-MART Shibuya.png')},
+    {id:'atmos',name:'atmos',jp:'アトモス',desc:'Сникер-хаб — японские релизы, коллаборации Nike/adidas и лимитированные дропы.',url:'https://www.atmos-tokyo.com/',urlLabel:'atmos-tokyo.com',img:imgPath('atmos.jpg'),area:'много филиалов'},
+  ]},
+  {id:'tech',title:'Техника',jp:'テック',
+  shops:[
+    {id:'bic_camera',name:'Bic Camera Shibuya East',jp:'ビックカメラ',desc:'Крупный электронный дискаунтер у восточного выхода Сибуи — камеры, гаджеты, tax-free, часто скидки туристам.',area:'Сибуя',address:'Shibuya 1-24-12, Toei Plaza 1-5F',lat:35.6593,lng:139.7018,img:imgPath('Bic Camera Shibuya East.jpg')},
+  ]},
+  {id:'concept',title:'Концепт-сторы',jp:'コンセプトストア',
+  shops:[
+    {id:'nubian',name:'Nubian Harajuku',jp:'ヌビアン',desc:'Концепт-стор уличной моды и дизайнерских брендов в Харадзюку.',area:'Jingumae · Харадзюку',address:'Jingumae 1-20-2',lat:35.6692,lng:139.7073,img:imgPath('Nubian Harajuku.png')},
+    {id:'wism',name:'WISM Shibuya',jp:'ウィズム',desc:'Мультибрендовый концепт-стор — японский и международный streetwear.',area:'Jingumae',address:'Jingumae 6-19-12, Aoyama Bldg 1F',lat:35.6661,lng:139.7041,img:imgPath('WISM Shibuya.png')},
+    {id:'royal_flash',name:'Royal Flash Jingumae',jp:'ロイヤルフラッシュ',desc:'Кураторский магазин моды и лайфстайла в Jingumae.',area:'Jingumae',address:'Jingumae 6-18-8',lat:35.6663,lng:139.7040,img:imgPath('Royal Flash Jingumae.png')},
+    {id:'gr8',name:'GR8',jp:'グレイト',desc:'Галерея-магазин моды и арт-объектов — экспериментальные бренды.',area:'Jingumae · Omotesando',address:'Jingumae 1-11-6, 2.5F',lat:35.6691,lng:139.7054,img:imgPath('GR8.png')},
+    {id:'loveless',name:'Loveless Aoyama',jp:'ラブレス',desc:'Культовый концепт-стор японского авангарда и дизайнерской моды.',area:'Minamiaoyama',address:'Minamiaoyama 3-16-1',lat:35.6646,lng:139.7147,img:imgPath('Loveless Aoyama.png')},
+    {id:'dsm',name:'Dover Street Market Ginza',jp:'ドーバーストリートマーケット',desc:'Флагман Comme des Garçons — мультибрендовое пространство-инсталляция.',area:'Ginza',address:'Ginza 6-9-5',lat:35.6693,lng:139.7644,img:imgPath('Dover Street Market Ginza.png')},
+    {id:'beams',name:'BEAMS Harajuku',jp:'ビームス',desc:'Культовый флагман BEAMS в Харадзюку — streetwear и heritage.',area:'Jingumae · Harajuku',address:'Jingumae 3-24-7, 1F-2F',lat:35.6704,lng:139.7108,img:imgPath('BEAMS Harajuku.png')},
+    {id:'kith',name:'Kith Tokyo',jp:'キス',desc:'Флагман Kith в Miyashita Park — кроссовки, одежда, коллаборации.',area:'Jingumae · Miyashita Park',address:'Jingumae 6-20-10, Miyashita Park North 1-2F',lat:35.6636,lng:139.7022,img:imgPath('Kith -Tokyo.png')},
+  ]},
 ];
+
+function getAllShops(){
+  const out=[];
+  SHOP_CATEGORIES.forEach(cat=>{
+    cat.shops.forEach(s=>out.push({...s,catId:cat.id,catTitle:cat.title}));
+  });
+  return out;
+}
+
+function shopMapsLink(s){
+  if(s.url)return s.url;
+  if(s.lat&&s.lng)return `https://maps.google.com/?q=${s.lat},${s.lng}`;
+  return null;
+}
 
 const EXTRA_PLACES={
   osaka:[
@@ -1246,6 +1348,19 @@ function dayFilterLabel(tab){
   return m?`${m[1].padStart(2,'0')}.09`:tab;
 }
 
+function dayHash(i){
+  const m=DAYS[i].tab.match(/^(\d{1,2})/);
+  return m?`#day/${m[1]}`:`#day/${i}`;
+}
+
+function dayIndexFromHash(){
+  const m=location.hash.match(/^#day\/(\d+)$/);
+  if(!m)return null;
+  const n=+m[1];
+  const i=DAYS.findIndex(d=>d.tab.startsWith(n+' '));
+  return i>=0?i:null;
+}
+
 function renderDayFilters(regionId){
   const days=regionDayRoutes[regionId];
   if(!days.length)return'';
@@ -1263,14 +1378,108 @@ function renderDayFilters(regionId){
   </div>`;
 }
 
+function renderShopsMap(mappedCount){
+  const loc=mappedCount===1?'магазин':mappedCount<5?'магазина':'магазинов';
+  const id='city-shops';
+  return`<div class="section-label">${mappedCount} ${loc} на карте</div>
+    <div class="map-wrap" id="mapwrap-${id}">
+      <div class="map-day-filters" id="shop-cat-filters"></div>
+      <div class="map-fs-top">
+        <span class="map-fs-title">Магазины · Токио</span>
+        <button type="button" class="map-fs-close" id="fsclose-${id}" aria-label="Закрыть карту">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="day-map" id="map-${id}"></div>
+      <button type="button" class="map-btn map-btn--icon map-btn--fs" id="fsopen-${id}" aria-label="На весь экран">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
+      </button>
+      <div class="map-actions">
+        <a class="map-btn" id="gmap-${id}" href="#" target="_blank" rel="noopener">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Maps
+        </a>
+      </div>
+    </div>`;
+}
+
 function renderShopsSection(){
+  const mapped=getAllShops().filter(s=>s.lat);
   return`<div id="places-shops" class="places-view">
     <div class="city-section" id="city-shops">
       <h2 class="city-title">Магазины <span class="city-title-jp jp">ショップ</span></h2>
-      <div class="places-grid">${SHOPS.map(s=>renderPlaceCard({
-        name:s.name,jp:s.jp,desc:s.desc,link:s.url,urlLabel:s.urlLabel,img:s.img
-      },false)).join('')}</div>
+      ${mapped.length?renderShopsMap(mapped.length):''}
+      ${SHOP_CATEGORIES.map(cat=>`
+      <div class="shop-category" id="shops-${cat.id}">
+        <h3 class="shop-category-title">${cat.title}${cat.jp?` <span class="shop-category-jp jp">${cat.jp}</span>`:''}</h3>
+        <div class="places-grid">${cat.shops.map(s=>{
+          const maps=shopMapsLink(s);
+          return renderPlaceCard({
+            name:s.name,jp:s.jp,desc:s.desc,
+            link:maps,urlLabel:s.urlLabel||(maps?'Google Maps':null),
+            img:s.img,area:s.area
+          },false);
+        }).join('')}</div>
+      </div>`).join('')}
     </div>
+  </div>`;
+}
+function renderTokyoShopsCategoriesOnly(){
+  return SHOP_CATEGORIES.map(cat=>`
+  <div class="shop-category" id="shops-${cat.id}">
+    <h3 class="shop-category-title">${cat.title}${cat.jp?` <span class="shop-category-jp jp">${cat.jp}</span>`:''}</h3>
+    <div class="places-grid">${cat.shops.map(s=>{
+      const maps=shopMapsLink(s);
+      return renderPlaceCard({
+        name:s.name,jp:s.jp,desc:s.desc,
+        link:maps,urlLabel:s.urlLabel||(maps?'Google Maps':null),
+        img:s.img,area:s.area
+      },false);
+    }).join('')}</div>
+  </div>`).join('');
+}
+
+function renderTokyoShopsContent(){
+  const mapped=getAllShops().filter(s=>s.lat);
+  return`${mapped.length?renderShopsMap(mapped.length):''}
+  ${renderTokyoShopsCategoriesOnly()}`;
+}
+
+function renderCityPlacesSection(r,items,isFirst){
+  const activeCls=isFirst?' places-city-view--active':'';
+  if(r.id==='tokyo'){
+    const mapped=getAllShops().filter(s=>s.lat);
+    const totalOnMap=items.filter(p=>p.lat).length+mapped.length;
+    return`<div class="places-city-view${activeCls} tokyo-mode-all" data-city="tokyo">
+      <h2 class="city-title tokyo-city-head">${r.name} <span class="city-title-jp jp">${r.jp}</span></h2>
+      <div class="places-subnav places-subnav--tokyo">
+        <a href="#places/tokyo/all" class="places-subtab active" data-tokyo-view="all">Все</a>
+        <a href="#places/tokyo/sights" class="places-subtab" data-tokyo-view="sights">Достопримечательности</a>
+        <a href="#places/tokyo/shops" class="places-subtab" data-tokyo-view="shops">Магазины</a>
+      </div>
+      <div class="tokyo-panel tokyo-panel--all">
+        ${renderCityMap('city-tokyo-all','Токио',totalOnMap,null)}
+        <h2 class="city-title tokyo-section-head">Достопримечательности <span class="city-title-jp jp">スポット</span></h2>
+        <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
+        <div class="section-label" style="margin-top:32px">магазины</div>
+        ${renderTokyoShopsCategoriesOnly()}
+      </div>
+      <div class="tokyo-panel tokyo-panel--sights">
+        ${renderCityMap('city-tokyo',r.name,items.length,'tokyo')}
+        <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
+      </div>
+      <div class="tokyo-panel tokyo-panel--shops">
+        ${renderShopsMap(mapped.length)}
+        <h2 class="city-title tokyo-section-head">Магазины <span class="city-title-jp jp">ショップ</span></h2>
+        ${renderTokyoShopsCategoriesOnly()}
+      </div>
+    </div>`;
+  }
+  if(!items.length)return'';
+  return`<div class="places-city-view${activeCls}" data-city="${r.id}">
+    <h2 class="city-title">${r.name} <span class="city-title-jp jp">${r.jp}</span></h2>
+    ${renderCityMap('city-'+r.id,r.name,items.length,r.id)}
+    <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
   </div>`;
 }
 
@@ -1278,7 +1487,7 @@ function renderCityMap(id,title,count,regionId){
   const loc=count===1?'место':count<5?'места':'мест';
   return`<div class="section-label">${count} ${loc}</div>
     <div class="map-wrap" id="mapwrap-${id}">
-      ${renderDayFilters(regionId)}
+      ${regionId?renderDayFilters(regionId):''}
       <div class="map-fs-top">
         <span class="map-fs-title">${title}</span>
         <button type="button" class="map-fs-close" id="fsclose-${id}" aria-label="Закрыть карту">
@@ -1361,40 +1570,33 @@ placesPanel.className='panel';
 placesPanel.id='panel-places';
 placesPanel.innerHTML=`
   <div class="day-header">
-    <div class="day-index">каталог</div>
     <div class="day-title"><span class="day-city">Места </span><span class="day-city-jp">スポット</span></div>
   </div>
-  <div class="places-subnav">
-    <button type="button" class="places-subtab active" data-places-view="cities">По городам</button>
-    <button type="button" class="places-subtab" data-places-view="shops">Магазины</button>
+  <div class="places-subnav places-subnav--cities">
+    ${REGIONS.filter(r=>r.id==='tokyo'||placesCatalog[r.id]?.length).map((r,i)=>`
+    <a href="#places/${r.id}${r.id==='tokyo'?'/all':''}" class="places-subtab${i===0?' active':''}" data-places-city="${r.id}">${r.name}</a>`).join('')}
   </div>
-  <div id="places-cities" class="places-view places-view--active">
-  ${REGIONS.map(r=>{
-    const items=placesCatalog[r.id];
-    if(!items.length)return'';
-    return`<div class="city-section" id="city-${r.id}">
-      <h2 class="city-title">${r.name} <span class="city-title-jp jp">${r.jp}</span></h2>
-      ${renderCityMap('city-'+r.id,r.name,items.length,r.id)}
-      <div class="places-grid">${items.map(pl=>renderPlaceCard(pl,false)).join('')}</div>
-    </div>`;
-  }).join('')}
-  </div>
-  ${renderShopsSection()}`;
+  <div id="places-cities">
+    ${(()=>{let n=0;return REGIONS.map(r=>{
+      const items=placesCatalog[r.id]||[];
+      if(r.id!=='tokyo'&&!items.length)return'';
+      const html=renderCityPlacesSection(r,items,n===0);
+      n++;
+      return html;
+    }).join('');})()}
+  </div>`;
 
 DAYS.forEach((d,i)=>{
-  const t=document.createElement('div');
+  const t=document.createElement('a');
   t.className='tab'+(i===0?' active':'');
+  t.href=dayHash(i);
   t.textContent=dayFilterLabel(d.tab);
-  t.onclick=()=>scrollToDay(i);
   tabsEl.appendChild(t);
 });
-const expTab=document.createElement('div');
+const expTab=document.createElement('a');
 expTab.className='tab tab-exp';
+expTab.href='#expenses';
 expTab.textContent='Расходы';
-expTab.onclick=()=>{
-  if(window.matchMedia('(max-width:640px)').matches)setView('expenses');
-  else scrollToDay('exp');
-};
 tabsEl.appendChild(expTab);
 
 // ─── BUILD PANELS ──────────────────────
@@ -1515,20 +1717,134 @@ expPanel.innerHTML=`
 panelsEl.appendChild(expPanel);
 panelsEl.appendChild(placesPanel);
 
-function initPlacesSubnav(){
-  document.querySelectorAll('.places-subtab').forEach(btn=>{
-    btn.onclick=()=>{
-      if(btn.classList.contains('active'))return;
-      document.querySelectorAll('.places-subtab').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      const view=btn.dataset.placesView;
-      document.getElementById('places-cities').classList.toggle('places-view--active',view==='cities');
-      document.getElementById('places-shops').classList.toggle('places-view--active',view==='shops');
-      if(view==='cities')setTimeout(()=>initAllCityMaps(),80);
-    };
-  });
+let activePlacesCity='osaka';
+let activeTokyoView='all';
+
+function parsePlacesHash(){
+  const m=location.hash.match(/^#places(?:\/([a-z]+))?(?:\/([a-z]+))?$/);
+  if(!m)return null;
+  const city=m[1]||'osaka';
+  if(!REGIONS.some(r=>r.id===city))return null;
+  if(city==='tokyo'){
+    const v=m[2]||'all';
+    return{city,tokyoView:['all','sights','shops'].includes(v)?v:'all'};
+  }
+  return{city,tokyoView:null};
 }
-initPlacesSubnav();
+
+function syncPlacesHash(city,tokyoView){
+  const hash=city==='tokyo'?`#places/tokyo/${tokyoView||'all'}`:`#places/${city}`;
+  if(location.hash!==hash)history.replaceState(null,'',hash);
+}
+
+function enterPlacesView(){
+  if(currentView==='places')return;
+  currentView='places';
+  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.add('mode-places');
+  document.querySelectorAll('.view-btn,.mobile-menu-item').forEach(b=>{
+    b.classList.toggle('active',b.dataset.view==='places');
+  });
+  const titleEl=document.getElementById('view-nav-title');
+  if(titleEl)titleEl.textContent='Места';
+  closeMobileMenu();
+  scrollLock=true;
+  clearTimeout(scrollLockTimer);
+  window.scrollTo({top:0,behavior:'smooth'});
+  scrollLockTimer=setTimeout(()=>{scrollLock=false;},600);
+}
+
+function applyPlacesHash(){
+  const p=parsePlacesHash();
+  if(!p)return;
+  enterPlacesView();
+  if(p.city==='tokyo'){
+    activeTokyoView=p.tokyoView;
+    showPlacesCity('tokyo',{skipHash:true});
+  }else showPlacesCity(p.city,{skipHash:true});
+}
+
+function showPlacesCity(cityId,{skipHash=false}={}){
+  activePlacesCity=cityId;
+  document.querySelectorAll('.places-subtab[data-places-city]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.placesCity===cityId);
+  });
+  document.querySelectorAll('.places-city-view').forEach(v=>{
+    v.classList.toggle('places-city-view--active',v.dataset.city===cityId);
+  });
+  if(cityId==='tokyo')showTokyoView(activeTokyoView,{skipHash});
+  else{
+    if(!skipHash)syncPlacesHash(cityId);
+    const items=placesCatalog[cityId];
+    if(items?.length)setTimeout(()=>initCityMap(cityId,items),80);
+  }
+}
+
+function showTokyoView(view,{skipHash=false}={}){
+  activeTokyoView=view;
+  document.querySelectorAll('.places-subtab[data-tokyo-view]').forEach(b=>{
+    b.classList.toggle('active',b.dataset.tokyoView===view);
+  });
+  const tokyoEl=document.querySelector('.places-city-view[data-city="tokyo"]');
+  if(tokyoEl){
+    tokyoEl.classList.remove('tokyo-mode-all','tokyo-mode-sights','tokyo-mode-shops');
+    tokyoEl.classList.add('tokyo-mode-'+view);
+  }
+  if(!skipHash)syncPlacesHash('tokyo',view);
+  setTimeout(()=>{
+    if(view==='all')initTokyoAllMap();
+    else if(view==='sights'){
+      const items=placesCatalog.tokyo;
+      if(items?.length)initCityMap('tokyo',items);
+    }else initShopsMap();
+    const mapKey=view==='all'?'city-tokyo-all':view==='sights'?'city-tokyo':'city-shops';
+    if(mapInst[mapKey])mapInst[mapKey].invalidateSize();
+  },120);
+}
+
+function initPlacesCityNav(){
+  window.addEventListener('hashchange',applyHash);
+}
+
+function applyHash(){
+  if(location.hash.startsWith('#places'))applyPlacesHash();
+  else if(location.hash.startsWith('#day/')||location.hash==='#expenses')applyRouteHash();
+}
+
+function enterRouteView({skipScroll=false}={}){
+  const wasRoute=currentView==='route';
+  currentView='route';
+  document.body.classList.remove('mode-places','mode-expenses');
+  document.body.classList.add('mode-route');
+  document.querySelectorAll('.view-btn,.mobile-menu-item').forEach(b=>{
+    b.classList.toggle('active',b.dataset.view==='route');
+  });
+  const titleEl=document.getElementById('view-nav-title');
+  if(titleEl)titleEl.textContent='Маршрут';
+  closeMobileMenu();
+  if(!skipScroll&&!wasRoute){
+    scrollLock=true;
+    clearTimeout(scrollLockTimer);
+    window.scrollTo({top:0,behavior:'smooth'});
+    scrollLockTimer=setTimeout(()=>{scrollLock=false;},600);
+  }
+}
+
+function applyRouteHash(){
+  if(location.hash==='#expenses'){
+    if(isMobileNav())setView('expenses',{skipScroll:true});
+    else scrollToDay('exp',{skipHash:true});
+    return;
+  }
+  const i=dayIndexFromHash();
+  if(i===null)return;
+  enterRouteView({skipScroll:true});
+  scrollToDay(i,{skipHash:true});
+}
+
+initPlacesCityNav();
+if(!location.hash)history.replaceState(null,'','#day/17');
+applyHash();
 
 // ─── MAP INIT ──────────────────────────
 let fsMapId=null;
@@ -1538,11 +1854,20 @@ function ensureMapReady(mapId){
   if(mapInst[mapId])return;
   const s=String(mapId);
   if(/^\d+$/.test(s))initMap(+s);
+  else if(s==='city-shops')initShopsMap();
+  else if(s==='city-tokyo-all')initTokyoAllMap();
   else if(s.startsWith('city-')){
     const regionId=s.slice(5);
     const items=placesCatalog[regionId];
     if(items?.length)initCityMap(regionId,items);
   }
+}
+
+function refreshMapSize(mapId){
+  const m=mapInst[mapId];
+  if(!m)return;
+  m.invalidateSize({animate:false});
+  requestAnimationFrame(()=>m.invalidateSize({animate:false}));
 }
 
 function resizeMap(mapId){
@@ -1734,6 +2059,152 @@ function wireDayFilters(regionId){
   });
 }
 
+const shopMapState={markersByCat:null};
+
+function initShopsMap(){
+  const mapId='city-shops';
+  if(mapInst[mapId])return;
+  const el=document.getElementById('map-'+mapId);
+  const allShops=getAllShops().filter(s=>s.lat);
+  if(!el||!allShops.length)return;
+
+  const filtersEl=document.getElementById('shop-cat-filters');
+  const catsWithCoords=SHOP_CATEGORIES.filter(c=>c.shops.some(s=>s.lat));
+  if(filtersEl){
+    filtersEl.innerHTML=`
+      <label class="map-day-filter map-day-filter--all">
+        <input type="checkbox" id="shop-cb-all" checked> Все
+      </label>
+      ${catsWithCoords.map(c=>`
+      <label class="map-day-filter">
+        <input type="checkbox" class="shop-cb-cat" data-cat="${c.id}" checked>
+        <span class="map-day-swatch" style="background:${SHOP_CAT_COLORS[c.id]}"></span>
+        ${c.title}
+      </label>`).join('')}`;
+  }
+
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+
+  const markersByCat={};
+  allShops.forEach(s=>{
+    const color=SHOP_CAT_COLORS[s.catId]||'#111110';
+    const imgHtml=s.img
+      ?`<img src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
+      :'';
+    const html=`<div class="photo-marker" style="border-color:${color}" title="${s.name}">${imgHtml}</div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const addr=s.address?`<div class="popup-sub">${s.address}</div>`:'';
+    const maps=shopMapsLink(s);
+    const marker=L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`
+      ${s.img?`<img class="popup-img" src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+      <div class="popup-name">${s.name}</div>
+      <div class="popup-sub">${s.jp||''}${s.area?' · '+s.area:''}</div>
+      ${addr}
+      ${maps?`<a class="place-meta-link" style="display:block;margin-top:8px" href="${maps}" target="_blank" rel="noopener">Google Maps</a>`:''}
+    `);
+    if(!markersByCat[s.catId])markersByCat[s.catId]=[];
+    markersByCat[s.catId].push(marker);
+  });
+
+  addStayMarkers(map,'tokyo');
+  fitMapToPoints(map,allShops,'tokyo',0.15);
+  setTimeout(()=>map.invalidateSize(),0);
+  const gmap=document.getElementById('gmap-'+mapId);
+  if(gmap)gmap.href=buildGmapsCenterUrl(allShops);
+  mapInst[mapId]=map;
+  shopMapState.map=map;
+  shopMapState.markersByCat=markersByCat;
+
+  if(!filtersEl)return;
+  const allCb=filtersEl.querySelector('#shop-cb-all');
+  const catCbs=[...filtersEl.querySelectorAll('.shop-cb-cat')];
+  function updateMarkers(){
+    const showAll=allCb.checked;
+    catCbs.forEach(cb=>{
+      const list=markersByCat[cb.dataset.cat]||[];
+      const show=showAll||cb.checked;
+      list.forEach(m=>{
+        if(show){if(!map.hasLayer(m))m.addTo(map);}
+        else map.removeLayer(m);
+      });
+    });
+  }
+  allCb.addEventListener('change',()=>{
+    if(allCb.checked)catCbs.forEach(cb=>{cb.checked=true;});
+    updateMarkers();
+  });
+  catCbs.forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      if(!cb.checked)allCb.checked=false;
+      else if(catCbs.every(c=>c.checked))allCb.checked=true;
+      updateMarkers();
+    });
+  });
+}
+
+function initTokyoAllMap(){
+  const mapId='city-tokyo-all';
+  if(mapInst[mapId])return;
+  const el=document.getElementById('map-'+mapId);
+  const places=placesCatalog.tokyo.filter(p=>p.lat);
+  const allShops=getAllShops().filter(s=>s.lat);
+  if(!el||(!places.length&&!allShops.length))return;
+
+  const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+
+  (regionDayRoutes.tokyo||[]).forEach(dr=>{
+    if(dr.places.length<2)return;
+    const color=DAY_ROUTE_COLORS[dr.dayIdx%DAY_ROUTE_COLORS.length];
+    L.polyline(dr.places.map(p=>[p.lat,p.lng]),{
+      color,weight:2.5,opacity:0.75,dashArray:'6,5',
+    }).addTo(map);
+  });
+
+  places.forEach(pl=>{
+    const offCls=pl.offRoute?' photo-marker--off-route':'';
+    const html=`<div class="photo-marker${offCls}" title="${pl.name}">
+      <img src="${pl.img}" alt="" loading="lazy"
+        onerror="this.style.display='none';this.parentNode.style.background='#888'">
+    </div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
+      <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+      <div class="popup-name">${pl.name}</div>
+      <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
+    `);
+  });
+
+  allShops.forEach(s=>{
+    const color=SHOP_CAT_COLORS[s.catId]||'#111110';
+    const imgHtml=s.img
+      ?`<img src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
+      :'';
+    const html=`<div class="photo-marker" style="border-color:${color}" title="${s.name}">${imgHtml}</div>`;
+    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const addr=s.address?`<div class="popup-sub">${s.address}</div>`:'';
+    const maps=shopMapsLink(s);
+    L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`
+      ${s.img?`<img class="popup-img" src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+      <div class="popup-name">${s.name}</div>
+      <div class="popup-sub">${s.jp||''}${s.area?' · '+s.area:''}</div>
+      ${addr}
+      ${maps?`<a class="place-meta-link" style="display:block;margin-top:8px" href="${maps}" target="_blank" rel="noopener">Google Maps</a>`:''}
+    `);
+  });
+
+  addStayMarkers(map,'tokyo');
+  const allPts=[...places,...allShops];
+  fitMapToPoints(map,allPts,'tokyo',0.12);
+  setTimeout(()=>map.invalidateSize(),0);
+  const gmap=document.getElementById('gmap-'+mapId);
+  if(gmap)gmap.href=buildGmapsCenterUrl(allPts);
+  mapInst[mapId]=map;
+}
+
 function initAllCityMaps(){
   REGIONS.forEach(r=>{
     const items=placesCatalog[r.id];
@@ -1760,12 +2231,9 @@ function openMapFullscreen(mapId){
   document.body.classList.add('map-fs-open');
   const m=mapInst[mapId];
   if(m)m.scrollWheelZoom.enable();
-  resizeMap(mapId);
-  requestAnimationFrame(()=>{
-    resizeMap(mapId);
-    setTimeout(()=>resizeMap(mapId),80);
-    setTimeout(()=>resizeMap(mapId),250);
-  });
+  refreshMapSize(mapId);
+  setTimeout(()=>refreshMapSize(mapId),80);
+  setTimeout(()=>refreshMapSize(mapId),250);
 }
 
 function closeMapFullscreen(){
@@ -1786,12 +2254,9 @@ function closeMapFullscreen(){
   const m=mapInst[id];
   if(!m)return;
   m.scrollWheelZoom.disable();
-  requestAnimationFrame(()=>{
-    resizeMap(id);
-    setTimeout(()=>resizeMap(id),50);
-    setTimeout(()=>resizeMap(id),200);
-    setTimeout(()=>resizeMap(id),400);
-  });
+  setTimeout(()=>refreshMapSize(id),50);
+  setTimeout(()=>refreshMapSize(id),200);
+  setTimeout(()=>refreshMapSize(id),400);
 }
 
 document.addEventListener('click',e=>{
@@ -1844,7 +2309,7 @@ function toggleMobileMenu(){
   else openMobileMenu();
 }
 
-function setView(mode){
+function setView(mode,{skipScroll=false}={}){
   currentView=mode;
   document.body.classList.remove('mode-places','mode-expenses');
   document.body.classList.add(
@@ -1857,12 +2322,21 @@ function setView(mode){
   const titleEl=document.getElementById('view-nav-title');
   if(titleEl)titleEl.textContent=labels[mode]||'Маршрут';
   closeMobileMenu();
-  scrollLock=true;
-  clearTimeout(scrollLockTimer);
-  window.scrollTo({top:0,behavior:'smooth'});
-  scrollLockTimer=setTimeout(()=>{scrollLock=false;},600);
-  if(mode==='places')setTimeout(()=>initAllCityMaps(),80);
-  else if(mode==='route'&&!mapInst[0])setTimeout(()=>initMap(0),120);
+  if(!skipScroll){
+    scrollLock=true;
+    clearTimeout(scrollLockTimer);
+    window.scrollTo({top:0,behavior:'smooth'});
+    scrollLockTimer=setTimeout(()=>{scrollLock=false;},600);
+  }
+  if(mode==='places'){
+    if(!location.hash.startsWith('#places'))syncPlacesHash(activePlacesCity||'osaka',activePlacesCity==='tokyo'?activeTokyoView:null);
+    setTimeout(()=>showPlacesCity(activePlacesCity||'osaka',{skipHash:true}),120);
+  }else if(mode==='route'){
+    if(!location.hash.startsWith('#day/')&&location.hash!=='#expenses'){
+      history.replaceState(null,'',dayHash(currentActive>=0&&currentActive<DAYS.length?currentActive:0));
+    }
+    if(!mapInst[0])setTimeout(()=>initMap(0),120);
+  }
 }
 
 document.getElementById('burger-btn')?.addEventListener('click',toggleMobileMenu);
@@ -1888,9 +2362,9 @@ function setActiveTab(index){
   }
 }
 
-function scrollToDay(id){
-  if(id==='exp'&&isMobileNav()){setView('expenses');return}
-  if(currentView!=='route')setView('route');
+function scrollToDay(id,{skipHash=false}={}){
+  if(id==='exp'&&isMobileNav()){setView('expenses',{skipScroll:true});return}
+  if(currentView!=='route')enterRouteView({skipScroll:true});
   const el=document.getElementById(typeof id==='number'?'panel-'+id:'panel-exp');
   if(!el)return;
   scrollLock=true;
@@ -1900,9 +2374,12 @@ function scrollToDay(id){
   const ti=typeof id==='number'?id:DAYS.length;
   currentActive=-1;
   setActiveTab(ti);
+  if(!skipHash){
+    history.replaceState(null,'',typeof id==='number'?dayHash(id):'#expenses');
+  }
   if(typeof id==='number'){
     if(fsMapId!==null&&fsMapId!==id)closeMapFullscreen();
-    setTimeout(()=>{initMap(id);if(mapInst[id])mapInst[id].invalidateSize();},400);
+    setTimeout(()=>{initMap(id);refreshMapSize(id);},400);
   }
   scrollLockTimer=setTimeout(()=>{scrollLock=false;},900);
 }
@@ -1922,8 +2399,9 @@ function updateActiveFromScroll(){
   if(active===currentActive)return;
   setActiveTab(active);
   if(active<DAYS.length){
+    if(!location.hash.startsWith('#places'))history.replaceState(null,'',dayHash(active));
     if(!mapInst[active])initMap(active);
-    else mapInst[active].invalidateSize();
+    else refreshMapSize(active);
   }
 }
 

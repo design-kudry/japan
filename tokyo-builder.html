@@ -154,6 +154,9 @@ html,body{height:100%;overflow:hidden;font-family:"Helvetica Neue",Helvetica,Ari
 .photo-marker .badge{position:absolute;bottom:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--text);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
 .photo-marker--dim{opacity:.45;filter:grayscale(.3)}
 .photo-marker--cat{border-color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.photo-marker--shop{border-radius:8px}
+.cat-thumb--empty{display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--surface)}
+.cat-tag{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;background:#E8F0FE;color:#1565C0;margin-left:4px;vertical-align:middle}
 .stay-marker{width:42px;height:42px;border-radius:50%;background:#C2410C;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
 .leaflet-popup-content-wrapper{border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.12);border:1px solid var(--border)}
 .leaflet-popup-content{margin:10px 12px;min-width:160px}
@@ -183,11 +186,11 @@ html,body{height:100%;overflow:hidden;font-family:"Helvetica Neue",Helvetica,Ari
   <button type="button" class="panel-toggle" id="panel-toggle" aria-label="Свернуть панель">‹</button>
   <div class="panel-head">
     <h1>Конструктор · Токио</h1>
-    <p>24–30 сент · MAT Ryogoku · перетаскивай места, линии на карте</p>
+    <p>24–30 сент · MAT Ryogoku · места + магазины · сохраняется автоматически</p>
   </div>
   <div class="tabs">
     <div class="tab active" data-section="days">Дни</div>
-    <div class="tab" data-section="catalog">Места</div>
+    <div class="tab" data-section="catalog">Каталог</div>
     <div class="tab" data-section="export">Экспорт</div>
   </div>
   <div class="panel-body">
@@ -206,10 +209,11 @@ html,body{height:100%;overflow:hidden;font-family:"Helvetica Neue",Helvetica,Ari
       <div class="toolbar">
         <button type="button" class="btn btn--ghost" id="clear-day">Очистить день</button>
       </div>
-      <p class="route-hint">Перетаскивай пункты ↕ чтобы менять порядок — линия на карте обновится. Добавляй места из вкладки «Места» или кликом на маркер.</p>
+      <p class="route-hint">Перетаскивай пункты ↕ чтобы менять порядок — линия на карте обновится. Добавляй из «Каталог» (места или магазины) или кликом на маркер.</p>
       <ul class="route-list" id="route-list"></ul>
     </div>
     <div class="section" id="sec-catalog">
+      <div class="area-chips" id="cat-mode-chips" style="margin-bottom:8px"></div>
       <input type="search" class="search" id="cat-search" placeholder="Поиск…">
       <div class="area-chips" id="area-chips"></div>
       <ul class="catalog" id="catalog"></ul>
@@ -289,18 +293,80 @@ const PLACES=[
 
 const PLACE_BY_ID=Object.fromEntries(PLACES.map(p=>[p.id,p]));
 
+const SHOP_CAT_COLORS={
+  vintage:'#6A1B9A',concept:'#1565C0',boutiques:'#2E7D32',
+  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',
+};
+const SHOP_AREAS={
+  vintage:'Винтаж',boutiques:'Бутики',beauty:'Красота',sneakers:'Кроссовки',
+  tech:'Техника',concept:'Концепт',
+};
+const SHOP_CATEGORIES=[
+  {id:'vintage',title:'Винтаж и ресейл',shops:[
+    {id:'amore_vintage',name:'AMORE Vintage AOYAMA',jp:'アモーレヴィンテージ',desc:'Люксовый винтаж-бутик.',geoArea:'Jingumae',address:'Jingumae 5-1-6, 2F',lat:35.6645,lng:139.7064,img:imgPath('AMORE Vintage AOYAMA.jpg')},
+    {id:'vintage_qoo',name:'Vintage QOO',jp:'ヴィンテージQOO',desc:'Аутентичный винтаж до 2000-х.',geoArea:'Jingumae',address:'Jingumae 5-2-6, B1F-2F',lat:35.6648,lng:139.7068,img:imgPath('Vintage QOO.jpg')},
+    {id:'paradise',name:'Paradise Vintage',jp:'パラダイスヴィンテージ',desc:'Кураторский винтаж в Харадзюку.',geoArea:'Jingumae',address:'Jingumae 6-6-2, 2F',lat:35.6661,lng:139.7041,img:imgPath('Paradise vintage .jpg')},
+    {id:'mixthinks',name:'MixTHINKS Harajuku',jp:'ミックスシンクス',desc:'Винтаж и streetwear.',geoArea:'Harajuku',address:'Jingumae 6-28-6, 1F-2F',lat:35.6652,lng:139.7018,img:imgPath('MixTHINKS Harajuku Store.png')},
+    {id:'ragtag',name:'RAGTAG Shibuya',jp:'ラグタグ',desc:'Ресейл люксовых домов.',geoArea:'Сибуя',address:'Jinnan 1-17-7',lat:35.6635,lng:139.7002,img:imgPath('RAGTAG Shibuya.jpg')},
+    {id:'oedo_market',name:'OEDO Antique Market',jp:'大江戸骨董市',desc:'Рынок сб/вс.',geoArea:'Marunouchi',address:'Marunouchi 3-5-5',lat:35.6770,lng:139.7635,img:imgPath('OEDO Antique Market.jpg')},
+    {id:'brand_off',name:'Brand Off Tokyo',jp:'ブランドオフ',desc:'Люкс-аксессуары с сертификатами.',geoArea:'Гинза',address:'Ginza 5-5-9, 1F-4F',lat:35.6701,lng:139.7655,img:imgPath('Brand Off Tokyo.png')},
+    {id:'brand_collect',name:'Brand Collect',jp:'ブランドコレクト',desc:'Люкс и streetwear винтаж.',geoArea:'Сибуя',address:'Jinnan 1-9-2, 1F',lat:35.6648,lng:139.7025,img:imgPath('Brand Collect.png')},
+    {id:'casanova',name:'CASANOVA vintage',jp:'カサノバ',desc:'Винтаж у T\'s Omotesando.',geoArea:'Omotesando',address:'Jingumae 5-11-6, 1F',lat:35.6659,lng:139.7090,img:imgPath('CASANOVA vintage.png')},
+    {id:'brand_collect_vintage',name:'BRAND COLLECT VINTAGE',jp:'ブランドコレクト',desc:'Винтаж Omotesando.',geoArea:'Omotesando',address:'Jingumae 4-3-21, 1F',lat:35.6671,lng:139.7106,img:imgPath('BRAND COLLECT VINTAGE.png')},
+  ]},
+  {id:'boutiques',title:'Бутики / бренды',shops:[
+    {id:'uniqlo_ginza',name:'Uniqlo Ginza',jp:'ユニクロ銀座',desc:'Флагман на 12 этажей.',geoArea:'Гинза',address:'Ginza 6-9-5, 1F-12F',lat:35.6693,lng:139.7644,img:imgPath('Uniqlo Ginza.jpg')},
+    {id:'muji_ginza',name:'MUJI Ginza',jp:'無印良品銀座',desc:'10 этажей MUJI + MUJI HOTEL.',geoArea:'Гинза',img:imgPath('MUJI.jpg')},
+    {id:'gentle_monster',name:'Gentle Monster Aoyama',jp:'ジェントルモンスター',desc:'Очки Gentle Monster.',geoArea:'Minamiaoyama',address:'Minamiaoyama 5-3-2, 1F-2F',lat:35.6623,lng:139.7135,img:imgPath('Gentle Monster .jpg')},
+    {id:'cdg_aoyama',name:'Comme des Garcons Aoyama',jp:'コムデギャルソン',desc:'Флагман CDG.',geoArea:'Minamiaoyama',address:'Minamiaoyama 5-2-1',lat:35.6630,lng:139.7128,img:imgPath('Comme des Garcons Aoyama.jpg')},
+    {id:'itoya',name:'Itoya Ginza',jp:'伊東屋',desc:'Канцелярия с 1904 года.',geoArea:'Гинза',address:'Ginza 2-7-15',lat:35.6730,lng:139.7674,img:imgPath('Itoya Ginza.jpg')},
+    {id:'yello_fitting',name:'YELLO FITTING SALON',jp:'イエロー',desc:'Fitting salon YELLO.',geoArea:'Jingumae',address:'Jingumae 6-8-5, AI Bldg 2F',lat:35.6659,lng:139.7046,img:imgPath('YELLO FITTING SALON.png')},
+    {id:'donki',name:'Don Quijote',jp:'ドン・キホーテ',desc:'Дискаунтер, tax-free.',geoArea:'Сибуя',address:'Udagawacho 28-6',lat:35.6604,lng:139.6978,img:imgPath('Don Quijote.jpg')},
+  ]},
+  {id:'beauty',title:'Красота / уход',shops:[
+    {id:'refa',name:'REFA Ginza',jp:'リファ',desc:'Бьюти-гаджеты ReFa.',geoArea:'Гинза',address:'Ginza 7-9-15, GINZA gCUBE',lat:35.6687,lng:139.7628,img:imgPath('REFA Ginza.png')},
+    {id:'matsukiyo',name:'Matsumoto Kiyoshi Ginza',jp:'マツモトキヨシ',desc:'Аптека в Гинзе.',geoArea:'Гинза',address:'Ginza 5-5-1',lat:35.6720,lng:139.7647,img:imgPath('Matsumoto Kiyoshi Ginza.png')},
+    {id:'tamburins',name:'TAMBURINS AOYAMA',jp:'タンバリンズ',desc:'Парфюмерия Tamburins.',geoArea:'Minamiaoyama',address:'Minamiaoyama 5-3-2',lat:35.6623,lng:139.7135,img:imgPath('Tamburins Aoyama.png')},
+  ]},
+  {id:'sneakers',title:'Обувь / кроссовки',shops:[
+    {id:'onitsuka',name:'Onitsuka Tiger Shibuya',jp:'オニツカタイガー',desc:'Флагман в Сибуе.',geoArea:'Сибуя',address:'Jinnan 1-21-3, 1-2F',lat:35.6614,lng:139.7006,img:imgPath('Onitsuka Tiger Shibuya.png')},
+    {id:'abc_mart',name:'ABC-MART Shibuya',jp:'エービーシーマート',desc:'Сникеры, много брендов.',geoArea:'Сибуя',address:'Udagawacho 27-6',lat:35.6621,lng:139.6975,img:imgPath('ABC-MART Shibuya.png')},
+    {id:'atmos',name:'atmos',jp:'アトモス',desc:'Сникер-хаб, коллаборации.',geoArea:'филиалы',img:imgPath('atmos.jpg')},
+  ]},
+  {id:'tech',title:'Техника',shops:[
+    {id:'bic_camera',name:'Bic Camera Shibuya East',jp:'ビックカメラ',desc:'Электроника, tax-free.',geoArea:'Сибуя',address:'Shibuya 1-24-12, 1-5F',lat:35.6593,lng:139.7018,img:imgPath('Bic Camera Shibuya East.jpg')},
+  ]},
+  {id:'concept',title:'Концепт-сторы',shops:[
+    {id:'nubian',name:'Nubian Harajuku',jp:'ヌビアン',desc:'Streetwear и дизайнерские бренды.',geoArea:'Harajuku',address:'Jingumae 1-20-2',lat:35.6692,lng:139.7073,img:imgPath('Nubian Harajuku.png')},
+    {id:'wism',name:'WISM Shibuya',jp:'ウィズム',desc:'Мультибрендовый streetwear.',geoArea:'Jingumae',address:'Jingumae 6-19-12, 1F',lat:35.6661,lng:139.7041,img:imgPath('WISM Shibuya.png')},
+    {id:'royal_flash',name:'Royal Flash Jingumae',jp:'ロイヤルフラッシュ',desc:'Мода и лайфстайл.',geoArea:'Jingumae',address:'Jingumae 6-18-8',lat:35.6663,lng:139.7040,img:imgPath('Royal Flash Jingumae.png')},
+    {id:'gr8',name:'GR8',jp:'グレイト',desc:'Мода и арт-объекты.',geoArea:'Omotesando',address:'Jingumae 1-11-6, 2.5F',lat:35.6691,lng:139.7054,img:imgPath('GR8.png')},
+    {id:'loveless',name:'Loveless Aoyama',jp:'ラブレス',desc:'Японский авангард.',geoArea:'Minamiaoyama',address:'Minamiaoyama 3-16-1',lat:35.6646,lng:139.7147,img:imgPath('Loveless Aoyama.png')},
+    {id:'dsm',name:'Dover Street Market Ginza',jp:'ドーバーストリートマーケット',desc:'Флагман CDG.',geoArea:'Ginza',address:'Ginza 6-9-5',lat:35.6693,lng:139.7644,img:imgPath('Dover Street Market Ginza.png')},
+    {id:'beams',name:'BEAMS Harajuku',jp:'ビームス',desc:'Флагман BEAMS.',geoArea:'Harajuku',address:'Jingumae 3-24-7, 1-2F',lat:35.6704,lng:139.7108,img:imgPath('BEAMS Harajuku.png')},
+    {id:'kith',name:'Kith Tokyo',jp:'キス',desc:'Miyashita Park.',geoArea:'Miyashita Park',address:'Jingumae 6-20-10, 1-2F',lat:35.6636,lng:139.7022,img:imgPath('Kith -Tokyo.png')},
+  ]},
+];
+const SHOPS=SHOP_CATEGORIES.flatMap(cat=>cat.shops.map(s=>({
+  ...s,type:'shop',catId:cat.id,catTitle:cat.title,
+  area:cat.id,hours:s.address||s.geoArea||'—',price:cat.title,
+})));
+const SHOP_BY_ID=Object.fromEntries(SHOPS.map(s=>[s.id,s]));
+const ITEM_BY_ID={...PLACE_BY_ID,...SHOP_BY_ID};
+const MAP_ITEMS=[...PLACES,...SHOPS.filter(s=>s.lat&&s.lng)];
+
 const DEFAULT_DAYS=[
-  {id:'24',date:'24 сент',weekday:'чт',title:'заезд, вечер',note:'',placeIds:[],visible:true,fromHome:true},
-  {id:'25',date:'25 сент',weekday:'пт',title:'',note:'',placeIds:[],visible:true,fromHome:true},
-  {id:'26',date:'26 сент',weekday:'сб',title:'',note:'',placeIds:[],visible:true,fromHome:true},
-  {id:'27',date:'27 сент',weekday:'вс',title:'',note:'',placeIds:[],visible:true,fromHome:true},
-  {id:'28',date:'28 сент',weekday:'пн',title:'',note:'',placeIds:[],visible:true,fromHome:true},
-  {id:'29',date:'29 сент',weekday:'вт',title:'Камакура?',note:'если в Токио — заполни места',placeIds:[],visible:true,fromHome:true},
+  {id:'24',date:'24 сент',weekday:'чт',title:'заезд, вечер',note:'',placeIds:['gyoen','shinjuku','omoide','kabukicho','golden_gai'],visible:true,fromHome:true},
+  {id:'25',date:'25 сент',weekday:'пт',title:'',note:'Вечер как день шопинга',placeIds:['kameido','skytree','sumida','nakamise','sensoji','tnm','ueno'],visible:true,fromHome:true},
+  {id:'26',date:'26 сент',weekday:'сб',title:'',note:'',placeIds:['hie','imperial','yasukuni','kagurazaka','koishikawa','nezu','yanaka','akihabara'],visible:true,fromHome:true},
+  {id:'27',date:'27 сент',weekday:'вс',title:'',note:'',placeIds:['teamlab','hamarikyu','azabudai','national_art','mori','shibuya_sky','hachiko','shibuya'],visible:true,fromHome:true},
+  {id:'28',date:'28 сент',weekday:'пн',title:'День выставок',note:'тоже полу-свободный',placeIds:['wb','meiji','shimokitazawa'],visible:true,fromHome:true},
+  {id:'29',date:'29 сент',weekday:'вт',title:'Камакура',note:'если в Токио — заполни места',placeIds:[],visible:true,fromHome:true},
   {id:'30',date:'30 сент',weekday:'ср',title:'финал, выезд',note:'',placeIds:[],visible:true,fromHome:true},
 ];
 
-const STORAGE_KEY='tokyo-builder-v1';
-let state={activeDay:'24',days:JSON.parse(JSON.stringify(DEFAULT_DAYS)),catArea:'',catSearch:''};
+const STORAGE_KEY='tokyo-builder-v2';
+let state={activeDay:'24',days:JSON.parse(JSON.stringify(DEFAULT_DAYS)),catMode:'places',catArea:'',catSearch:''};
 let map,layerRoutes,layerMarkers,layerStay,dragSrcIdx=null;
 
 function loadState(){
@@ -308,21 +374,28 @@ function loadState(){
     const raw=localStorage.getItem(STORAGE_KEY);
     if(!raw)return;
     const s=JSON.parse(raw);
-    if(s.days&&s.days.length)state={...state,...s};
+    if(s.days&&s.days.length){
+      state={...state,...s,catMode:s.catMode||'places'};
+      state.days.forEach(d=>{
+        d.placeIds=(d.placeIds||[]).filter(id=>ITEM_BY_ID[id]);
+      });
+    }
   }catch(e){}
 }
 function saveState(){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify({activeDay:state.activeDay,days:state.days}));
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({activeDay:state.activeDay,days:state.days,catMode:state.catMode}));
 }
 
 function weekdayKey(wd){
   return({вс:'sun',пн:'mon',вт:'tue',ср:'wed',чт:'thu',пт:'fri',сб:'sat'})[wd]||'';
 }
 
-function closedWarning(placeId,day){
+function closedWarning(itemId,day){
+  const p=PLACE_BY_ID[itemId];
+  if(!p)return'';
   const wk=weekdayKey(day.weekday);
   if(!wk||!CLOSED[wk])return'';
-  if(CLOSED[wk].includes(placeId)){
+  if(CLOSED[wk].includes(itemId)){
     const labels={mon:'понедельник',fri:'пятница'};
     return`⚠ закрыто в ${labels[wk]||wk} — проверь дату`;
   }
@@ -371,9 +444,10 @@ function initMap(){
     .addTo(layerStay);
 }
 
-function markerHtml(p,badge,dim){
-  return`<div class="photo-marker${dim?' photo-marker--dim photo-marker--cat':''}" style="${badge?`border-color:${badge.color}`:''}">
-    <img src="${p.img}" alt="" loading="lazy">
+function markerHtml(p,badge,dim,isShop){
+  const shopCls=isShop?' photo-marker--shop':'';
+  return`<div class="photo-marker${dim?' photo-marker--dim photo-marker--cat':''}${shopCls}" style="${badge?`border-color:${badge.color}`:''}">
+    ${p.img?`<img src="${p.img}" alt="" loading="lazy">`:''}
     ${badge?`<span class="badge" style="background:${badge.color}">${badge.label}</span>`:''}
   </div>`;
 }
@@ -390,14 +464,12 @@ function drawMap(){
     const pts=[];
     if(day.fromHome)pts.push([STAY.lat,STAY.lng]);
     day.placeIds.forEach((pid,i)=>{
-      const p=PLACE_BY_ID[pid];
-      if(!p)return;
+      const p=ITEM_BY_ID[pid];
+      if(!p||!p.lat||!p.lng)return;
       inRoute.add(pid);
       pts.push([p.lat,p.lng]);
       const key=pid;
-      if(!markerMap[key]){
-        markerMap[key]={place:p,badges:[]};
-      }
+      if(!markerMap[key])markerMap[key]={place:p,badges:[]};
       markerMap[key].badges.push({color,label:`${day.id}-${i+1}`});
     });
     if(pts.length>=2){
@@ -407,13 +479,15 @@ function drawMap(){
 
   Object.values(markerMap).forEach(({place,badges})=>{
     const b=badges.length===1?badges[0]:{color:badges[0].color,label:badges.length};
-    const icon=L.divIcon({className:'',html:markerHtml(place,b,false),iconSize:[40,40],iconAnchor:[20,20]});
+    const isShop=place.type==='shop';
+    const icon=L.divIcon({className:'',html:markerHtml(place,b,false,isShop),iconSize:[40,40],iconAnchor:[20,20]});
     const m=L.marker([place.lat,place.lng],{icon,zIndexOffset:200});
     const used=placeUsage(place.id);
     const usedTxt=used.map(u=>`${u.day}.${u.num}`).join(', ');
+    const sub=isShop?(place.address||place.geoArea||place.catTitle):(place.jp+' · '+place.hours+(place.book?' · 🎫':''));
     const btnAdd=`<button type="button" class="popup-btn" data-add="${place.id}">+ в день ${state.activeDay}</button>`;
     const btnRm=used.length?`<button type="button" class="popup-btn popup-btn--rm" data-rm="${place.id}">убрать из ${state.activeDay}</button>`:'';
-    m.bindPopup(`<img class="popup-img" src="${place.img}" alt=""><div class="popup-name">${place.name}</div><div class="popup-sub">${place.jp} · ${place.hours}${place.book?' · 🎫':''}</div>${used.length?`<div class="popup-sub">в маршруте: ${usedTxt}</div>`:''}${btnAdd}${btnRm}`);
+    m.bindPopup(`${place.img?`<img class="popup-img" src="${place.img}" alt="">`:''}<div class="popup-name">${place.name}${isShop?' <span class="cat-tag">магазин</span>':''}</div><div class="popup-sub">${sub}</div>${used.length?`<div class="popup-sub">в маршруте: ${usedTxt}</div>`:''}${btnAdd}${btnRm}`);
     m.on('popupopen',()=>{
       m.getPopup().getElement().querySelector('[data-add]')?.addEventListener('click',()=>{addToDay(place.id);map.closePopup();});
       m.getPopup().getElement().querySelector('[data-rm]')?.addEventListener('click',()=>{removeFromDay(place.id);map.closePopup();});
@@ -421,11 +495,13 @@ function drawMap(){
     m.addTo(layerMarkers);
   });
 
-  PLACES.forEach(p=>{
+  MAP_ITEMS.forEach(p=>{
     if(inRoute.has(p.id))return;
-    const icon=L.divIcon({className:'',html:markerHtml(p,null,true),iconSize:[36,36],iconAnchor:[18,18]});
+    const isShop=p.type==='shop';
+    const icon=L.divIcon({className:'',html:markerHtml(p,null,true,isShop),iconSize:[36,36],iconAnchor:[18,18]});
     const m=L.marker([p.lat,p.lng],{icon,zIndexOffset:50});
-    m.bindPopup(`<img class="popup-img" src="${p.img}" alt=""><div class="popup-name">${p.name}</div><div class="popup-sub">${p.jp} · ${p.hours}</div><button type="button" class="popup-btn" data-add="${p.id}">+ в день ${state.activeDay}</button>`);
+    const sub=isShop?(p.address||p.geoArea||p.catTitle):(p.jp+' · '+p.hours);
+    m.bindPopup(`${p.img?`<img class="popup-img" src="${p.img}" alt="">`:''}<div class="popup-name">${p.name}${isShop?' <span class="cat-tag">магазин</span>':''}</div><div class="popup-sub">${sub}</div><button type="button" class="popup-btn" data-add="${p.id}">+ в день ${state.activeDay}</button>`);
     m.on('popupopen',()=>{
       m.getPopup().getElement().querySelector('[data-add]')?.addEventListener('click',()=>{addToDay(p.id);map.closePopup();});
     });
@@ -437,7 +513,7 @@ function drawMap(){
 
 function updateGmapLink(){
   const day=activeDay();
-  const pts=day.placeIds.map(id=>PLACE_BY_ID[id]).filter(Boolean);
+  const pts=day.placeIds.map(id=>ITEM_BY_ID[id]).filter(p=>p&&p.lat&&p.lng);
   const el=document.getElementById('gmap-link');
   if(!pts.length){el.href=`https://maps.google.com/?q=${STAY.lat},${STAY.lng}`;return;}
   const path=[`${STAY.lat},${STAY.lng}`,...pts.map(p=>`${p.lat},${p.lng}`)].join('/');
@@ -468,18 +544,22 @@ function renderRouteList(){
   const color=DAY_COLORS[day.id];
 
   if(!day.placeIds.length){
-    el.innerHTML='<li class="route-empty">Пусто — добавь места из «Места» или с карты</li>';
+    el.innerHTML='<li class="route-empty">Пусто — добавь из «Каталог» или с карты</li>';
     return;
   }
   el.innerHTML=day.placeIds.map((pid,i)=>{
-    const p=PLACE_BY_ID[pid];
+    const p=ITEM_BY_ID[pid];
     if(!p)return'';
     const warn=closedWarning(pid,day);
+    const isShop=p.type==='shop';
+    const meta=isShop
+      ?`${p.catTitle}${p.address?' · '+p.address:''}${p.geoArea?' · '+p.geoArea:''}${!p.lat?' · без карты':''}`
+      :`${p.hours}${p.price?` · ${p.price}`:''}${p.book?' · 🎫 бронь':''}`;
     return`<li class="route-item" draggable="true" data-idx="${i}" data-pid="${pid}">
       <span class="route-num" style="background:${color}">${i+1}</span>
       <div class="route-info">
-        <div class="route-name">${p.name} <span style="font-weight:400;color:var(--text3)">${p.jp}</span></div>
-        <div class="route-meta">${p.hours}${p.price?` · ${p.price}`:''}${p.book?' · 🎫 бронь':''}</div>
+        <div class="route-name">${p.name}${isShop?' <span class="cat-tag">магазин</span>':''} <span style="font-weight:400;color:var(--text3)">${p.jp}</span></div>
+        <div class="route-meta">${meta}</div>
         ${warn?`<div class="route-warn">${warn}</div>`:''}
         ${p.closed?`<div class="route-meta">${p.closed}</div>`:''}
       </div>
@@ -510,31 +590,58 @@ function renderCatalog(){
   const q=state.catSearch.toLowerCase();
   const area=state.catArea;
   const usedIds=new Set(state.days.flatMap(d=>d.placeIds));
-  const list=PLACES.filter(p=>{
+  const source=state.catMode==='shops'?SHOPS:PLACES;
+  const areaMap=state.catMode==='shops'?SHOP_AREAS:AREAS;
+  const list=source.filter(p=>{
     if(area&&p.area!==area)return false;
-    if(q&&!(`${p.name} ${p.jp} ${AREAS[p.area]}`.toLowerCase().includes(q)))return false;
+    const hay=state.catMode==='shops'
+      ?`${p.name} ${p.jp} ${p.catTitle} ${p.geoArea||''} ${p.address||''} ${p.desc||''}`
+      :`${p.name} ${p.jp} ${AREAS[p.area]}`;
+    if(q&&!hay.toLowerCase().includes(q))return false;
     return true;
   });
-  document.getElementById('catalog').innerHTML=list.map(p=>`
-    <li class="cat-item${usedIds.has(p.id)?' in-route':''}" data-id="${p.id}">
-      <img class="cat-thumb" src="${p.img}" alt="" loading="lazy">
+  document.getElementById('catalog').innerHTML=list.map(p=>{
+    const isShop=p.type==='shop';
+    const sub=isShop?`${p.jp} · ${p.catTitle}${p.geoArea?' · '+p.geoArea:''}`:`${p.jp} · ${areaMap[p.area]}`;
+    const meta=isShop
+      ?`${p.address||p.desc||'—'}`
+      :`🕐 ${p.hours}${p.closed?` · ${p.closed}`:''}`;
+    const priceLine=isShop?p.catTitle:`${p.price}${p.book?' · 🎫 бронь':''}`;
+    const thumb=p.img
+      ?`<img class="cat-thumb" src="${p.img}" alt="" loading="lazy">`
+      :`<div class="cat-thumb cat-thumb--empty">${isShop?'🛍':'📍'}</div>`;
+    return`<li class="cat-item${usedIds.has(p.id)?' in-route':''}" data-id="${p.id}">
+      ${thumb}
       <div class="cat-body">
-        <div class="cat-name">${p.name}</div>
-        <div class="cat-jp">${p.jp} · ${AREAS[p.area]}</div>
-        <div class="cat-hours">🕐 ${p.hours}${p.closed?` · ${p.closed}`:''}</div>
-        <div class="cat-price">${p.price}${p.book?' · 🎫 бронь':''}</div>
+        <div class="cat-name">${p.name}${isShop?' <span class="cat-tag">магазин</span>':''}</div>
+        <div class="cat-jp">${sub}</div>
+        <div class="cat-hours">${meta}</div>
+        <div class="cat-price">${priceLine}</div>
       </div>
       <span class="cat-add">+</span>
-    </li>`).join('');
+    </li>`;
+  }).join('');
   document.getElementById('catalog').querySelectorAll('.cat-item').forEach(item=>{
     item.onclick=()=>addToDay(item.dataset.id);
   });
 }
 
+function renderCatModeChips(){
+  const el=document.getElementById('cat-mode-chips');
+  el.innerHTML=[
+    `<span class="chip${state.catMode==='places'?' active':''}" data-mode="places">Места</span>`,
+    `<span class="chip${state.catMode==='shops'?' active':''}" data-mode="shops">Магазины</span>`,
+  ].join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.onclick=()=>{state.catMode=c.dataset.mode;state.catArea='';saveState();renderCatalog();renderAreaChips();renderCatModeChips();};
+  });
+}
+
 function renderAreaChips(){
   const el=document.getElementById('area-chips');
+  const areaMap=state.catMode==='shops'?SHOP_AREAS:AREAS;
   el.innerHTML=[`<span class="chip${!state.catArea?' active':''}" data-area="">Все</span>`,
-    ...Object.entries(AREAS).map(([k,v])=>`<span class="chip${state.catArea===k?' active':''}" data-area="${k}">${v.split(' / ')[0]}</span>`),
+    ...Object.entries(areaMap).map(([k,v])=>`<span class="chip${state.catArea===k?' active':''}" data-area="${k}">${v.split(' / ')[0]}</span>`),
   ].join('');
   el.querySelectorAll('.chip').forEach(c=>{
     c.onclick=()=>{state.catArea=c.dataset.area;renderCatalog();renderAreaChips();};
@@ -580,24 +687,37 @@ function buildExport(){
       lines.push('  (пусто)');
     }else{
       day.placeIds.forEach((pid,i)=>{
-        const p=PLACE_BY_ID[pid];
+        const p=ITEM_BY_ID[pid];
         if(!p)return;
         const warn=closedWarning(pid,day);
+        const isShop=p.type==='shop';
         let line=`${i+1}. ${p.name} · ${p.jp}`;
-        line+=` — ${p.hours}`;
-        if(p.price&&p.price!=='Бесплатно')line+=` · ${p.price}`;
-        if(p.book)line+=' · 🎫 бронь';
+        if(isShop){
+          line+=` — ${p.catTitle}`;
+          if(p.address)line+=` · ${p.address}`;
+        }else{
+          line+=` — ${p.hours}`;
+          if(p.price&&p.price!=='Бесплатно')line+=` · ${p.price}`;
+          if(p.book)line+=' · 🎫 бронь';
+        }
         lines.push(line);
         if(p.closed)lines.push(`   ↳ ${p.closed}`);
         if(warn)lines.push(`   ↳ ${warn}`);
+        if(isShop&&!p.lat)lines.push('   ↳ без координат — не на карте');
       });
     }
     lines.push('');
   });
-  const unused=PLACES.filter(p=>!state.days.some(d=>d.placeIds.includes(p.id)));
-  if(unused.length){
-    lines.push('— Не в маршруте —');
-    unused.forEach(p=>lines.push(`· ${p.name} (${p.hours})`));
+  const usedIds=new Set(state.days.flatMap(d=>d.placeIds));
+  const unusedPlaces=PLACES.filter(p=>!usedIds.has(p.id));
+  const unusedShops=SHOPS.filter(p=>!usedIds.has(p.id));
+  if(unusedPlaces.length){
+    lines.push('— Места не в маршруте —');
+    unusedPlaces.forEach(p=>lines.push(`· ${p.name} (${p.hours})`));
+  }
+  if(unusedShops.length){
+    lines.push('— Магазины не в маршруте —');
+    unusedShops.forEach(p=>lines.push(`· ${p.name} (${p.catTitle})`));
   }
   return lines.join('\n');
 }
@@ -609,6 +729,7 @@ function renderExport(){
 function renderAll(){
   renderDayTabs();
   renderRouteList();
+  renderCatModeChips();
   renderCatalog();
   renderAreaChips();
   renderMapFilters();
@@ -644,7 +765,7 @@ function bindUI(){
   };
 
   document.getElementById('reset-all').onclick=()=>{
-    if(confirm('Сбросить весь маршрут?')){state.days=JSON.parse(JSON.stringify(DEFAULT_DAYS));state.activeDay='24';saveState();renderAll();}
+    if(confirm('Сбросить весь маршрут к исходному?')){state.days=JSON.parse(JSON.stringify(DEFAULT_DAYS));state.activeDay='24';state.catMode='places';state.catArea='';saveState();renderAll();}
   };
 
   document.getElementById('panel-toggle').onclick=()=>{
