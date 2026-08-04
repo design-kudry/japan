@@ -64,12 +64,36 @@ function stayPopupHtml(stay){
     ${dates}${price}${link}`;
 }
 
-function fitMapToPoints(map,pts,regionId,padding=0.25){
+function spreadMapPoints(items,minDeg=0.00045){
+  const pts=items.map(p=>({...p}));
+  for(let pass=0;pass<4;pass++){
+    for(let i=0;i<pts.length;i++){
+      if(pts[i].lat==null)continue;
+      for(let j=0;j<i;j++){
+        if(pts[j].lat==null)continue;
+        const dlat=pts[i].lat-pts[j].lat;
+        const dlng=pts[i].lng-pts[j].lng;
+        const dist=Math.hypot(dlat,dlng);
+        if(dist>=minDeg&&dist>1e-12)continue;
+        const angle=(i*2.399963)+pass;
+        const push=dist<1e-12?minDeg*(pass+1):Math.max(minDeg-dist,minDeg*0.35);
+        pts[i]={...pts[i],lat:pts[i].lat+Math.cos(angle)*push,lng:pts[i].lng+Math.sin(angle)*push};
+      }
+    }
+  }
+  return pts;
+}
+
+function fitMapToPoints(map,pts,regionId,padding=0.25,{includeStays=true,maxZoom=15}={}){
   const coords=pts.filter(p=>p.lat).map(p=>[p.lat,p.lng]);
-  getRegionStays(regionId).forEach(stay=>coords.push([stay.lat,stay.lng]));
+  if(includeStays)getRegionStays(regionId).forEach(stay=>coords.push([stay.lat,stay.lng]));
   if(!coords.length)return;
-  if(coords.length===1)map.setView(coords[0],14);
-  else map.fitBounds(L.latLngBounds(coords).pad(padding));
+  if(coords.length===1)map.setView(coords[0],Math.min(14,maxZoom));
+  else map.fitBounds(L.latLngBounds(coords).pad(padding),{maxZoom});
+}
+
+function makePhotoMarkerIcon(html){
+  return L.divIcon({className:'photo-marker-icon',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
 }
 
 function addStayMarkers(map,regionId){
@@ -84,7 +108,7 @@ function addStayMarkers(map,regionId){
       :`<div class="stay-marker stay-marker--${kind}" title="${stay.name}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1v-9.5z"/><path d="M9 21V12h6v9"/></svg>
         </div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const icon=makePhotoMarkerIcon(html);
     L.marker([stay.lat,stay.lng],{icon}).addTo(map).bindPopup(stayPopupHtml(stay));
   });
 }
@@ -105,7 +129,7 @@ function createMap(mapId,pts,{numbered=false,route=false,regionId=null}={}){
         onerror="this.style.display='none';this.parentNode.style.background='#888'">
       ${badge}
     </div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const icon=makePhotoMarkerIcon(html);
     const offNote=pl.offRoute?'<div class="popup-sub" style="color:#E53935;font-style:normal">не в маршруте</div>':'';
     L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
       <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
@@ -133,7 +157,7 @@ function initCityMap(regionId,places){
   const mapId='city-'+regionId;
   if(mapInst[mapId])return;
   const el=document.getElementById('map-'+mapId);
-  const pts=places.filter(p=>p.lat);
+  const pts=spreadMapPoints(places.filter(p=>p.lat));
   if(!el||!pts.length)return;
   const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
   L.control.zoom({position:'topright'}).addTo(map);
@@ -154,7 +178,7 @@ function initCityMap(regionId,places){
       <img src="${pl.img}" alt="" loading="lazy"
         onerror="this.style.display='none';this.parentNode.style.background='#888'">
     </div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const icon=makePhotoMarkerIcon(html);
     const offNote=pl.offRoute?'<div class="popup-sub" style="color:#E53935;font-style:normal">не в маршруте</div>':'';
     L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
       <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
@@ -215,7 +239,7 @@ function initShopsMap(city='tokyo'){
   const allCbId=city==='tokyo'?'shop-cb-all':city+'-shop-cb-all';
   if(mapInst[mapId])return;
   const el=document.getElementById('map-'+mapId);
-  const allShops=getAllShops(city).filter(s=>s.lat);
+  const allShops=spreadMapPoints(getAllShops(city).filter(s=>s.lat));
   if(!el||!allShops.length)return;
 
   const filtersEl=document.getElementById(filtersId);
@@ -244,7 +268,7 @@ function initShopsMap(city='tokyo'){
       ?`<img src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
       :'';
     const html=`<div class="photo-marker" style="border-color:${color}" title="${s.name}">${imgHtml}</div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
+    const icon=makePhotoMarkerIcon(html);
     const addr=s.address?`<div class="popup-sub">${s.address}</div>`:'';
     const maps=shopMapsLink(s);
     const marker=L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`
@@ -259,7 +283,7 @@ function initShopsMap(city='tokyo'){
   });
 
   addStayMarkers(map,city);
-  fitMapToPoints(map,allShops,city,0.15);
+  fitMapToPoints(map,allShops,city,0.12,{includeStays:false,maxZoom:14});
   setTimeout(()=>map.invalidateSize(),0);
   mapInst[mapId]=map;
   shopMapState.map=map;
@@ -298,7 +322,8 @@ function initCityAllMap(city){
   const el=document.getElementById('map-'+mapId);
   const places=(buildPlacesCatalog()[city]||[]).filter(p=>p.lat);
   const allShops=getAllShops(city).filter(s=>s.lat);
-  if(!el||(!places.length&&!allShops.length))return;
+  const allPts=spreadMapPoints([...places,...allShops]);
+  if(!el||!allPts.length)return;
 
   const map=L.map(el,{zoomControl:false,scrollWheelZoom:false,attributionControl:false});
   L.control.zoom({position:'topright'}).addTo(map);
@@ -312,40 +337,41 @@ function initCityAllMap(city){
     }).addTo(map);
   });
 
-  places.forEach(pl=>{
-    const offCls=pl.offRoute?' photo-marker--off-route':'';
-    const html=`<div class="photo-marker${offCls}" title="${pl.name}">
-      <img src="${pl.img}" alt="" loading="lazy"
-        onerror="this.style.display='none';this.parentNode.style.background='#888'">
-    </div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
-    L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
-      <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
-      <div class="popup-name">${pl.name}</div>
-      <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
-    `);
-  });
-
-  allShops.forEach(s=>{
-    const color=SHOP_CAT_COLORS[s.catId]||'#111110';
-    const imgHtml=s.img
-      ?`<img src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
-      :'';
-    const html=`<div class="photo-marker" style="border-color:${color}" title="${s.name}">${imgHtml}</div>`;
-    const icon=L.divIcon({className:'',html,iconSize:[38,38],iconAnchor:[19,19],popupAnchor:[0,-22]});
-    const addr=s.address?`<div class="popup-sub">${s.address}</div>`:'';
-    const maps=shopMapsLink(s);
-    L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`
-      ${s.img?`<img class="popup-img" src="${s.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
-      <div class="popup-name">${s.name}</div>
-      <div class="popup-sub">${s.jp||''}${s.area?' · '+s.area:''}</div>
-      ${addr}
-      ${maps?`<a class="place-meta-link" style="display:block;margin-top:8px" href="${maps}" target="_blank" rel="noopener">Google Maps</a>`:''}
-    `);
+  allPts.forEach(pl=>{
+    const isShop=!!pl.catId;
+    if(isShop){
+      const color=SHOP_CAT_COLORS[pl.catId]||'#111110';
+      const imgHtml=pl.img
+        ?`<img src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none';this.parentNode.style.background='#888'">`
+        :'';
+      const html=`<div class="photo-marker" style="border-color:${color}" title="${pl.name}">${imgHtml}</div>`;
+      const icon=makePhotoMarkerIcon(html);
+      const addr=pl.address?`<div class="popup-sub">${pl.address}</div>`:'';
+      const maps=shopMapsLink(pl);
+      L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
+        ${pl.img?`<img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}
+        <div class="popup-name">${pl.name}</div>
+        <div class="popup-sub">${pl.jp||''}${pl.area?' · '+pl.area:''}</div>
+        ${addr}
+        ${maps?`<a class="place-meta-link" style="display:block;margin-top:8px" href="${maps}" target="_blank" rel="noopener">Google Maps</a>`:''}
+      `);
+    }else{
+      const offCls=pl.offRoute?' photo-marker--off-route':'';
+      const html=`<div class="photo-marker${offCls}" title="${pl.name}">
+        <img src="${pl.img}" alt="" loading="lazy"
+          onerror="this.style.display='none';this.parentNode.style.background='#888'">
+      </div>`;
+      const icon=makePhotoMarkerIcon(html);
+      L.marker([pl.lat,pl.lng],{icon}).addTo(map).bindPopup(`
+        <img class="popup-img" src="${pl.img}" alt="" loading="lazy" onerror="this.style.display='none'">
+        <div class="popup-name">${pl.name}</div>
+        <div class="popup-sub">${pl.jp||''} · ${pl.price}</div>
+      `);
+    }
   });
 
   addStayMarkers(map,city);
-  fitMapToPoints(map,[...places,...allShops],city,0.12);
+  fitMapToPoints(map,allPts,city,0.12,{maxZoom:13});
   setTimeout(()=>map.invalidateSize(),0);
   mapInst[mapId]=map;
 }

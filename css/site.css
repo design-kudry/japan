@@ -408,6 +408,12 @@ body.mode-places #panel-places{display:flex}
   z-index:1;
 }
 .day-map{height:220px}
+.places-city-view .day-map,
+.page-main .day-map{height:300px}
+.leaflet-div-icon{
+  background:transparent!important;
+  border:none!important;
+}
 .map-actions{
   position:absolute;bottom:12px;left:12px;right:12px;
   display:flex;gap:8px;justify-content:center;

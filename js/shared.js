@@ -45,6 +45,7 @@ function formatMoneyPair(jpy,rub){
 }
 const NAME_MOB={
   'Namba Yasaka Shrine':'Namba Yasaka',
+  'Kura Sushi Namba':'Kura Sushi',
   'Shinsaibashi-suji':'Shinsaibashi',
   'Nakanoshima Park':'Nakanoshima',
   'Umeda Sky Building':'Umeda Sky',
@@ -226,6 +227,7 @@ function buildPlacesCatalog(){
   DAYS.forEach((d,i)=>{
     const rid=DAY_REGION[i];
     d.places.forEach(pl=>{
+      if(pl.asShop)return;
       if(seen.has(pl.name))return;
       seen.add(pl.name);
       byRegion[rid].push(pl);

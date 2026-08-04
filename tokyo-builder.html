@@ -295,11 +295,11 @@ const PLACE_BY_ID=Object.fromEntries(PLACES.map(p=>[p.id,p]));
 
 const SHOP_CAT_COLORS={
   vintage:'#6A1B9A',concept:'#1565C0',boutiques:'#2E7D32',
-  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',
+  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',food:'#B45309',
 };
 const SHOP_AREAS={
   vintage:'Винтаж',boutiques:'Бутики',beauty:'Красота',sneakers:'Кроссовки',
-  tech:'Техника',concept:'Концепт',
+  tech:'Техника',concept:'Концепт',food:'Еда',
 };
 const SHOP_CATEGORIES=[
   {id:'vintage',title:'Винтаж и ресейл',shops:[
@@ -313,6 +313,8 @@ const SHOP_CATEGORIES=[
     {id:'brand_collect',name:'Brand Collect',jp:'ブランドコレクト',desc:'Люкс и streetwear винтаж.',geoArea:'Сибуя',address:'Jinnan 1-9-2, 1F',lat:35.6648,lng:139.7025,img:imgPath('Brand Collect.png')},
     {id:'casanova',name:'CASANOVA vintage',jp:'カサノバ',desc:'Винтаж у T\'s Omotesando.',geoArea:'Omotesando',address:'Jingumae 5-11-6, 1F',lat:35.6659,lng:139.7090,img:imgPath('CASANOVA vintage.png')},
     {id:'brand_collect_vintage',name:'BRAND COLLECT VINTAGE',jp:'ブランドコレクト',desc:'Винтаж Omotesando.',geoArea:'Omotesando',address:'Jingumae 4-3-21, 1F',lat:35.6671,lng:139.7106,img:imgPath('BRAND COLLECT VINTAGE.png')},
+    {id:'atlantis_hiroo',name:'Atlantis Vintage Hiroo',jp:'アトランティス',desc:'Винтаж в Hiroo.',geoArea:'Hiroo',address:'Hiroo 5-2-24',lat:35.6499,lng:139.7204,img:imgPath('Atlantis Vintage Hiroo.png')},
+    {id:'hedy_daikanyama',name:'Hedy Daikanyama',jp:'ヘディー代官山',desc:'Люкс-винтаж Hedy.',geoArea:'Daikanyama',address:'Sarugakucho 26-8',lat:35.6501,lng:139.7011,img:imgPath('Hedy Daikanyama.png')},
   ]},
   {id:'boutiques',title:'Бутики / бренды',shops:[
     {id:'uniqlo_ginza',name:'Uniqlo Ginza',jp:'ユニクロ銀座',desc:'Флагман на 12 этажей.',geoArea:'Гинза',address:'Ginza 6-9-5, 1F-12F',lat:35.6693,lng:139.7644,img:imgPath('Uniqlo Ginza.jpg')},
@@ -327,6 +329,10 @@ const SHOP_CATEGORIES=[
     {id:'refa',name:'REFA Ginza',jp:'リファ',desc:'Бьюти-гаджеты ReFa.',geoArea:'Гинза',address:'Ginza 7-9-15, GINZA gCUBE',lat:35.6687,lng:139.7628,img:imgPath('REFA Ginza.png')},
     {id:'matsukiyo',name:'Matsumoto Kiyoshi Ginza',jp:'マツモトキヨシ',desc:'Аптека в Гинзе.',geoArea:'Гинза',address:'Ginza 5-5-1',lat:35.6720,lng:139.7647,img:imgPath('Matsumoto Kiyoshi Ginza.png')},
     {id:'tamburins',name:'TAMBURINS AOYAMA',jp:'タンバリンズ',desc:'Парфюмерия Tamburins.',geoArea:'Minamiaoyama',address:'Minamiaoyama 5-3-2',lat:35.6623,lng:139.7135,img:imgPath('Tamburins Aoyama.png')},
+    {id:'cosme_kitchen',name:'Cosme Kitchen BEAUTY',jp:'コスメキッチン',desc:'Натуральная косметика, Mitsukoshi 3F.',geoArea:'Гинза',address:'Ginza 4-6-16, Mitsukoshi 3F',lat:35.6712,lng:139.7659,img:imgPath('Cosme Kitchen BEAUTY.png')},
+  ]},
+  {id:'food',title:'Еда',shops:[
+    {id:'kaiten_sushi',name:'Conveyor Kaiten Sushi',jp:'回転寿司',desc:'Кайтэн-суши на Omotesando.',geoArea:'Jingumae',address:'Jingumae 5-1-6, Il Palazzino 1F',lat:35.6647,lng:139.7066,img:imgPath('Conveyor Kaiten Sushi.png')},
   ]},
   {id:'sneakers',title:'Обувь / кроссовки',shops:[
     {id:'onitsuka',name:'Onitsuka Tiger Shibuya',jp:'オニツカタイガー',desc:'Флагман в Сибуе.',geoArea:'Сибуя',address:'Jinnan 1-21-3, 1-2F',lat:35.6614,lng:139.7006,img:imgPath('Onitsuka Tiger Shibuya.png')},

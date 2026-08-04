@@ -2,6 +2,7 @@ const W='https://upload.wikimedia.org/wikipedia/commons/thumb/';
 const imgPath=(f)=>encodeURI((window.SITE_BASE||'')+'image/'+f);
 const P={
   namba_yasaka:imgPath('Namba Yasaka Shrine.jpg'),
+  kura_sushi_namba:imgPath('Kura Sushi Namba.png'),
   dotonbori:imgPath('Дотонбори.jpg'),
   amerikamura:imgPath('Amerikamura.jpg'),
   shinsaibashi:imgPath('Shinsaibashi-suji.jpg'),
@@ -86,9 +87,10 @@ const DAYS=[
  ],
  places:[
   {n:1,name:'Namba Yasaka Shrine',jp:'難波八阪神社',desc:'Огромная голова льва-алтарь — самая фотогеничная святыня Осаки.',price:'Бесплатно',hours:'06:30–17:00',img:P.namba_yasaka,lat:34.6566,lng:135.5009},
-  {n:2,name:'Dotonbori',jp:'道頓堀',desc:'Главная гастро-улица Осаки: такояки, рамен, огромная вывеска Glico над каналом.',price:'Бесплатно',hours:'24/7',img:P.dotonbori,lat:34.6687,lng:135.5012},
-  {n:3,name:'Amerikamura',jp:'アメリカ村',desc:'Молодёжный квартал в стиле США: винтаж, стрит-арт, уличная еда.',price:'Бесплатно',hours:'',img:P.amerikamura,lat:34.6720,lng:135.4981},
-  {n:4,name:'Shinsaibashi-suji',jp:'心斎橋筋商店街',desc:'Самая известная крытая торговая галерея Осаки — 600 м брендов и кафе.',price:'Бесплатно',hours:'10:00–22:00',img:P.shinsaibashi,lat:34.6736,lng:135.4980},
+  {n:2,name:'Kura Sushi Namba',jp:'くら寿司 なんば',desc:'Кайтэн-суши Kura на 4F BRAVE Namba у Sennichimae — лента и тач-заказ.',price:'¥1,500–2,500 · еда',hours:'11:00–23:00',img:P.kura_sushi_namba,lat:34.6643,lng:135.5039,asShop:true},
+  {n:3,name:'Dotonbori',jp:'道頓堀',desc:'Главная гастро-улица Осаки: такояки, рамен, огромная вывеска Glico над каналом.',price:'Бесплатно',hours:'24/7',img:P.dotonbori,lat:34.6687,lng:135.5012},
+  {n:4,name:'Amerikamura',jp:'アメリカ村',desc:'Молодёжный квартал в стиле США: винтаж, стрит-арт, уличная еда.',price:'Бесплатно',hours:'',img:P.amerikamura,lat:34.6720,lng:135.4981},
+  {n:5,name:'Shinsaibashi-suji',jp:'心斎橋筋商店街',desc:'Самая известная крытая торговая галерея Осаки — 600 м брендов и кафе.',price:'Бесплатно',hours:'10:00–22:00',img:P.shinsaibashi,lat:34.6736,lng:135.4980},
  ],
  budget:{}},
 
@@ -294,7 +296,7 @@ const STAYS={
 
 const SHOP_CAT_COLORS={
   vintage:'#6A1B9A',concept:'#1565C0',boutiques:'#2E7D32',
-  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',
+  beauty:'#C62828',sneakers:'#EF6C00',tech:'#00838F',food:'#B45309',
 };
 const CITY_GMAPS={
   osaka:'https://maps.app.goo.gl/YjYyPXe4Nh9GiQCG8',
@@ -319,11 +321,13 @@ tokyo:[
     {id:'brand_collect',name:'Brand Collect',jp:'ブランドコレクト',desc:'Люкс и streetwear винтаж у Miyashita Park.',area:'Сибуя',address:'Jinnan 1-9-2, 1F',lat:35.6648,lng:139.7025,img:imgPath('Brand Collect.png')},
     {id:'casanova',name:'CASANOVA vintage',jp:'カサノバ',desc:'Винтаж у T\'s Omotesando — кураторский отбор улицы Omotesando.',area:'Jingumae · Omotesando',address:'Jingumae 5-11-6, T\'s Omotesando 1F',lat:35.6659,lng:139.7090,img:imgPath('CASANOVA vintage.png')},
     {id:'brand_collect_vintage',name:'BRAND COLLECT VINTAGE',jp:'ブランドコレクト',desc:'Флагманский винтаж Omotesando — 3 мин от Omotesando Hills.',area:'Jingumae · Omotesando',address:'Jingumae 4-3-21, Nodera Bldg 1F',lat:35.6671,lng:139.7106,img:imgPath('BRAND COLLECT VINTAGE.png')},
+    {id:'atlantis_hiroo',name:'Atlantis Vintage Hiroo',jp:'アトランティス',desc:'Винтаж в Hiroo — кураторский отбор одежды и аксессуаров.',area:'Hiroo · Сибуя',address:'Hiroo 5-2-24',lat:35.6499,lng:139.7204,img:imgPath('Atlantis Vintage Hiroo.png')},
+    {id:'hedy_daikanyama',name:'Hedy Daikanyama',jp:'ヘディー代官山',desc:'Люкс-винтаж Hedy в Daikanyama — отбор мировых брендов.',area:'Daikanyama · Сибуя',address:'Sarugakucho 26-8',lat:35.6501,lng:139.7011,img:imgPath('Hedy Daikanyama.png')},
   ]},
   {id:'boutiques',title:'Бутики / бренды',jp:'ブティック',
   shops:[
     {id:'uniqlo_ginza',name:'Uniqlo Ginza',jp:'ユニクロ銀座',desc:'Флагман на 12 этажей — полная линейка, UT, кастомизация, tax-free.',area:'Гинза',address:'Ginza 6-9-5, 1F-12F',lat:35.6693,lng:139.7644,img:imgPath('Uniqlo Ginza.jpg')},
-    {id:'muji_ginza',name:'MUJI Ginza',jp:'無印良品銀座',desc:'10 этажей MUJI + MUJI HOTEL — одежда, дом, еда, кафе, флагманский опыт бренда.',url:'https://www.muji.com/jp',urlLabel:'muji.com',img:imgPath('MUJI.jpg'),area:'Гинза'},
+    {id:'muji_ginza',name:'MUJI Ginza',jp:'無印良品銀座',desc:'10 этажей MUJI + MUJI HOTEL — одежда, дом, еда, кафе, флагманский опыт бренда.',url:'https://www.muji.com/jp',urlLabel:'muji.com',img:imgPath('MUJI.jpg'),area:'Гинза',address:'Ginza 3-3-5',lat:35.6718,lng:139.7642},
     {id:'gentle_monster',name:'Gentle Monster Aoyama',jp:'ジェントルモンスター',desc:'Концептуальный бутик-инсталляция — очки Gentle Monster.',area:'Minamiaoyama',address:'Minamiaoyama 5-3-2, 1F-2F',lat:35.6623,lng:139.7135,img:imgPath('Gentle Monster .jpg')},
     {id:'cdg_aoyama',name:'Comme des Garcons Aoyama',jp:'コムデギャルソン',desc:'Двухэтажное флагманское пространство — основные линии CDG.',area:'Minamiaoyama',address:'Minamiaoyama 5-2-1',lat:35.6630,lng:139.7128,img:imgPath('Comme des Garcons Aoyama.jpg')},
     {id:'itoya',name:'Itoya Ginza',jp:'伊東屋',desc:'Флагманский 12-этажный магазин канцелярии с 1904 года — G. Itoya и K. Itoya.',area:'Гинза',address:'Ginza 2-7-15',lat:35.6730,lng:139.7674,img:imgPath('Itoya Ginza.jpg')},
@@ -335,12 +339,17 @@ tokyo:[
     {id:'refa',name:'REFA Ginza',jp:'リファ',desc:'Японские бьюти-гаджеты ReFa — массажёры для лица и тела, уходовая электроника.',area:'Гинза',address:'Ginza 7-9-15, GINZA gCUBE',lat:35.6687,lng:139.7628,img:imgPath('REFA Ginza.png')},
     {id:'matsukiyo',name:'Matsumoto Kiyoshi Ginza',jp:'マツモトキヨシ',desc:'Аптека Matsumoto Kiyoshi в Гинзе — японская косметика, tax-free.',area:'Гинза',address:'Ginza 5-5-1',lat:35.6720,lng:139.7647,img:imgPath('Matsumoto Kiyoshi Ginza.png')},
     {id:'tamburins',name:'TAMBURINS AOYAMA',jp:'タンバリンズ',desc:'Магазин парфюмерии Tamburins — The Jewels of Aoyama.',area:'Minamiaoyama',address:'Minamiaoyama 5-3-2, The Jewels of Aoyama 105',lat:35.6623,lng:139.7135,img:imgPath('Tamburins Aoyama.png')},
+    {id:'cosme_kitchen',name:'Cosme Kitchen BEAUTY',jp:'コスメキッチン',desc:'Натуральная и органическая косметика в Ginza Mitsukoshi.',area:'Гинза',address:'Ginza 4-6-16, Ginza Mitsukoshi 3F',lat:35.6712,lng:139.7659,img:imgPath('Cosme Kitchen BEAUTY.png')},
+  ]},
+  {id:'food',title:'Еда',jp:'フード',
+  shops:[
+    {id:'kaiten_sushi',name:'Conveyor Kaiten Sushi',jp:'回転寿司',desc:'Кайтэн-суши на Omotesando — лента в Il Palazzino 1F.',area:'Jingumae · Omotesando',address:'Jingumae 5-1-6, Il Palazzino 1F',lat:35.6647,lng:139.7066,img:imgPath('Conveyor Kaiten Sushi.png')},
   ]},
   {id:'sneakers',title:'Обувь / кроссовки',jp:'スニーカー',
   shops:[
     {id:'onitsuka',name:'Onitsuka Tiger Shibuya',jp:'オニツカタイガー',desc:'Флагман в Сибуе — Mexico 66, японские релизы и коллаборации.',area:'Сибуя',address:'Jinnan 1-21-3, Shibuya Jinnan Bldg 1-2F',lat:35.6614,lng:139.7006,img:imgPath('Onitsuka Tiger Shibuya.png')},
     {id:'abc_mart',name:'ABC-MART Shibuya',jp:'エービーシーマート',desc:'Крупный флагман у центра Сибуи — сникеры, японские и мировые бренды.',area:'Сибуя',address:'Udagawacho 27-6, Shibuya T Bldg.',lat:35.6621,lng:139.6975,img:imgPath('ABC-MART Shibuya.png')},
-    {id:'atmos',name:'atmos',jp:'アトモス',desc:'Сникер-хаб — японские релизы, коллаборации Nike/adidas и лимитированные дропы.',url:'https://www.atmos-tokyo.com/',urlLabel:'atmos-tokyo.com',img:imgPath('atmos.jpg'),area:'много филиалов'},
+    {id:'atmos',name:'atmos',jp:'アトモス',desc:'Сникер-хаб — японские релизы, коллаборации Nike/adidas и лимитированные дропы.',url:'https://www.atmos-tokyo.com/',urlLabel:'atmos-tokyo.com',img:imgPath('atmos.jpg'),area:'Сибуя · Харадзюку',address:'Jingumae 6-5-3',lat:35.6660,lng:139.7055},
   ]},
   {id:'tech',title:'Техника',jp:'テック',
   shops:[
@@ -365,6 +374,10 @@ osaka:[
     {id:'authentic_experts',name:'Authentic Experts',jp:'オーセンティックエキスパーツ',desc:'Винтаж и ресейл в Minamisenba — кураторский отбор одежды и аксессуаров.',area:'Minamisenba · Chuo',address:'Minamisenba 3-8-15, 1F',lat:34.6762,lng:135.5028,img:imgPath('Authentic Experts.png')},
     {id:'soar_osaka',name:'Soar Shop Osaka',jp:'ソア',desc:'Винтаж у Shinsaibashi — одежда и streetwear на втором этаже.',area:'Shinsaibashi · Chuo',address:'Nishishinsaibashi 1-6-23, 2F',lat:34.6710,lng:135.5005,img:imgPath('Soar Shop Osaka.png')},
     {id:'popeye_osaka',name:'POPEYE vintage used clothing',jp:'ポパイ',desc:'Used & vintage у Nakazaki — одежда у Umeda / Kita.',area:'Nakazaki · Kita',address:'Nakazakinishi 3-1-10',lat:34.7082,lng:135.5108,img:imgPath('POPEYE vintage used clothing.png')},
+  ]},
+  {id:'food',title:'Еда',jp:'フード',
+  shops:[
+    {id:'kura_sushi_namba',name:'Kura Sushi Namba',jp:'くら寿司 なんば',desc:'Кайтэн-суши Kura на 4F BRAVE Namba у Sennichimae — лента и тач-заказ.',area:'Namba · Chuo',address:'Nanbasennichimae 15-15, BRAVE Namba 4F',lat:34.6643,lng:135.5039,img:imgPath('Kura Sushi Namba.png')},
   ]},
 ],
 };

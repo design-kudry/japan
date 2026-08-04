@@ -1,7 +1,7 @@
 ЯПОНИЯ · ВСЕ МЕСТА
 ════════════════════════════════════════════════════════════
 
-Осака 大阪 · 12
+Осака 大阪 · 13
 ────────────────────────────────────────────────────────
 
 1. Namba Yasaka Shrine · 難波八阪神社
@@ -11,76 +11,84 @@
   Часы: 06:30–17:00
   Огромная голова льва-алтарь — самая фотогеничная святыня Осаки.
 
-2. Dotonbori · 道頓堀
+2. Kura Sushi Namba · くら寿司 なんば
+  Координаты: 34.6643, 135.5039
+  Google Maps: https://maps.google.com/?q=34.6643,135.5039
+  Адрес: Nanbasennichimae 15-15, BRAVE Namba 4F
+  Цена: ¥1,500–2,500 · еда
+  Часы: 11:00–23:00
+  Кайтэн-суши Kura на 4F BRAVE Namba у Sennichimae — лента и тач-заказ.
+
+3. Dotonbori · 道頓堀
   Координаты: 34.6687, 135.5012
   Google Maps: https://maps.google.com/?q=34.6687,135.5012
   Цена: Бесплатно
   Часы: 24/7
   Главная гастро-улица Осаки: такояки, рамен, огромная вывеска Glico над каналом.
 
-3. Amerikamura · アメリカ村
+4. Amerikamura · アメリカ村
   Координаты: 34.6720, 135.4981
   Google Maps: https://maps.google.com/?q=34.6720,135.4981
   Цена: Бесплатно
   Молодёжный квартал в стиле США: винтаж, стрит-арт, уличная еда.
 
-4. Shinsaibashi-suji · 心斎橋筋商店街
+5. Shinsaibashi-suji · 心斎橋筋商店街
   Координаты: 34.6736, 135.4980
   Google Maps: https://maps.google.com/?q=34.6736,135.4980
   Цена: Бесплатно
   Часы: 10:00–22:00
   Самая известная крытая торговая галерея Осаки — 600 м брендов и кафе.
 
-5. Sumiyoshi Taisha · 住吉大社
+6. Sumiyoshi Taisha · 住吉大社
   Координаты: 34.6117, 135.4931
   Google Maps: https://maps.google.com/?q=34.6117,135.4931
   Цена: Бесплатно
   Часы: 6:00–17:00
   Крупнейшее и старейшее синтоистское святилище Осаки — прообраз тысяч других.
 
-6. Osaka Castle · 大阪城
+7. Osaka Castle · 大阪城
   Координаты: 34.6873, 135.5262
   Google Maps: https://maps.google.com/?q=34.6873,135.5262
   Цена: ¥600 · 273 ₽
   Часы: 9:00–17:00
   Главный символ города. Музей внутри, панорама с верхней башни.
 
-7. Nakanoshima Park · 中之島公園
+8. Nakanoshima Park · 中之島公園
   Координаты: 34.6928, 135.5039
   Google Maps: https://maps.google.com/?q=34.6928,135.5039
   Цена: Бесплатно
   Часы: 24/7
   Исторический парк на острове между каналами, рядом с классической ратушей.
 
-8. Umeda Sky Building · 梅田スカイビル
+9. Umeda Sky Building · 梅田スカイビル
   Координаты: 34.7038, 135.4900
   Google Maps: https://maps.google.com/?q=34.7038,135.4900
   Цена: ¥1,500 · 684 ₽
   Часы: 10:00–22:30
   Небоскрёб-арка со смотровой «Floating Garden» на высоте 170 м.
 
-9. Den Den Town · 電電タウン
+10. Den Den Town · 電電タウン
   Координаты: 34.6621, 135.5070
   Google Maps: https://maps.google.com/?q=34.6621,135.5070
   Цена: Бесплатно
   Часы: 10:00–20:00
   Осакская Акихабара: электроника, аниме, манга, мэйд-кафе.
 
-10. Shinsekai · 新世界
+11. Shinsekai · 新世界
   Координаты: 34.6519, 135.5063
   Google Maps: https://maps.google.com/?q=34.6519,135.5063
   Цена: Бесплатно
   Часы: 24/7
   Ретро-квартал 1950-х с башней Цутэнкаку, уличной едой и ностальгией.
 
-11. Universal Studios Japan · ユニバーサル・スタジオ・ジャパン
+12. Universal Studios Japan · ユニバーサル・スタジオ・ジャパン
   Координаты: 34.6654, 135.4324
   Google Maps: https://maps.google.com/?q=34.6654,135.4324
   Цена: ¥8,600 · 5 720 ₽
   Часы: 9:00–22:00
   Super Nintendo World, Гарри Поттер, Миньоны — полный день приключений.
 
-12. Katsuoji Temple · 勝尾寺
+13. Katsuoji Temple · 勝尾寺
   Координаты: 34.8656, 135.4923
   Google Maps: https://maps.google.com/?q=34.8656,135.4923
   Цена: ¥500 · 228 ₽
@@ -488,7 +496,7 @@
   Синтоистский комплекс на острове: пещеры Ивайя, закат над океаном, вид на Фудзи.
 
 ════════════════════════════════════════════════════════════
-ИТОГО: 67 мест
+ИТОГО: 68 мест
 
 
 ════════════════════════════════════════════════════════════
@@ -496,7 +504,7 @@
 ════════════════════════════════════════════════════════════
 
 Осака 大阪
-  Namba Yasaka Shrine · Dotonbori · Amerikamura · Shinsaibashi-suji · Sumiyoshi Taisha · Osaka Castle · Nakanoshima Park · Umeda Sky Building · Den Den Town · Shinsekai · Universal Studios Japan · Katsuoji Temple
+  Namba Yasaka Shrine · Kura Sushi Namba · Dotonbori · Amerikamura · Shinsaibashi-suji · Sumiyoshi Taisha · Osaka Castle · Nakanoshima Park · Umeda Sky Building · Den Den Town · Shinsekai · Universal Studios Japan · Katsuoji Temple
 
 Киото 京都
   To-ji · Tofuku-ji · Fushimi Inari Taisha · Kiyomizu-dera · Gion · Higashiyama · Nishiki Market · Nijo Castle · Arashiyama Bamboo
