@@ -1,0 +1,36 @@
+{
+  "sourceRecords": 149,
+  "imported": 137,
+  "perCity": {
+    "Лондон": 89,
+    "Йорк": 48
+  },
+  "excludedMarkets": [
+    "Borough Market",
+    "Camden Market",
+    "Portobello Road Market",
+    "Leadenhall Market",
+    "Old Spitalfields Market",
+    "Shambles Market"
+  ],
+  "mergedSections": {
+    "Changing the Guard": "Buckingham Palace",
+    "Station Hall at National Railway Museum": "National Railway Museum",
+    "City Cruises York Sightseeing Cruise": "River Ouse Riverside Walk"
+  },
+  "duplicates": [
+    {
+      "merged": "Greenwich Park",
+      "into": "Greenwich & Greenwich Park"
+    },
+    {
+      "merged": "Royal Botanic Gardens, Kew",
+      "into": "Kew Gardens"
+    },
+    {
+      "merged": "St James's Park",
+      "into": "St James’s Park"
+    }
+  ],
+  "coordinateSources": "Wikipedia/Wikidata and OpenStreetMap; per-record source URLs in uk-catalog.js"
+}

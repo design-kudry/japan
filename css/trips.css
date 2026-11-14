@@ -1,0 +1,75 @@
+:root{--bg:#fff;--surface-dim:#f3f3f1;--border:#e3e3e0;--text-1:#111110;--text-2:#5a5a57;--r:12px;--control-r:8px;--control-height:44px;--focus:#55564f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text-1);font:15px var(--travel-font);line-height:1.45}
+main{width:min(100% - 32px,760px);margin:32px auto 72px}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(28px,5vw,36px);line-height:1.15;letter-spacing:-.025em;font-weight:600}
+h2{font-size:20px;line-height:1.25;font-weight:600}
+h3{font-size:16px;line-height:1.35;font-weight:600}
+p,small{color:var(--text-2);line-height:1.45}
+a{color:inherit}
+button{color:inherit;font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.header,.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header{margin-bottom:20px}
+.stack{display:grid;gap:12px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:var(--control-height);padding:8px 12px;color:var(--text-1);border:1px solid var(--border);border-radius:var(--control-r);background:var(--bg);text-decoration:none;text-align:center}
+.button:hover,.button[aria-pressed=true]{background:var(--surface-dim)}
+.button.primary,.button.primary:hover,.button[aria-pressed=true].day{background:var(--text-1);color:#fff;border-color:var(--text-1)}
+.plus{width:44px;height:44px;font-size:26px;line-height:1}
+.quiet{border:0;background:transparent;padding:4px;text-decoration:none}
+.back{display:inline-block;margin:0 0 12px}
+.card{border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;align-items:center;gap:12px}
+.trip-link{width:100%;text-align:left;text-decoration:none}
+.trip-link:hover{background:var(--surface-dim)}
+.thumb{width:48px;height:48px;flex:none;background:var(--surface-dim);border-radius:var(--control-r);object-fit:cover}
+.trip-link .thumb{width:64px;height:64px}
+.card-copy{min-width:0;overflow-wrap:anywhere}
+.card-copy h3{margin-bottom:4px}
+.tabs,.days,.actions{display:flex;gap:8px;flex-wrap:wrap}
+.days{flex-wrap:nowrap;overflow:auto;padding:4px 4px 8px;margin:0 -4px;font-variant-numeric:tabular-nums}
+.day{flex:none;background:var(--surface-dim);white-space:nowrap}
+.panel{background:var(--surface-dim);border-radius:var(--r);padding:16px}
+.day-heading{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border);padding:8px 0;font-size:16px}
+.day-heading time{color:var(--text-2);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.day-block{display:grid;gap:8px;scroll-margin-top:80px}
+.date-nav{position:sticky;top:0;z-index:2;padding-top:8px;background:var(--bg)}
+.city{background:var(--surface-dim);border-radius:var(--r);padding:12px}
+.city .actions{justify-content:flex-end}
+.city-dates{margin-top:12px}
+.form-step{max-width:520px;min-height:calc(100dvh - 106px);display:flex;flex-direction:column;gap:16px}
+.form-step .submit{margin-top:auto;padding-top:12px}
+.form-step .submit button,.wide{width:100%}
+label{display:grid;gap:8px;color:var(--text-2)}
+input,select{width:100%;min-width:0;min-height:var(--control-height);padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text-1);font:inherit}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.error{color:#a12822}
+@media(max-width:520px){main{margin-top:20px}}
+
+.transfer-icon{display:grid;place-items:center}
+
+[hidden]{display:none!important}
+.city-search label{flex:1}
+#city-options{border:1px solid var(--border);border-radius:var(--r);max-height:230px;overflow:auto}
+#city-options button{display:block;width:100%;padding:12px;text-align:left;background:var(--bg);border:0;border-bottom:1px solid var(--border)}
+#city-options button:last-child{border-bottom:0}
+#city-options button:hover,#city-options button[aria-selected=true]{background:var(--surface-dim)}
+.search-status:empty{display:none}
+[aria-label="Разделы поездки"]{gap:16px;border-bottom:1px solid var(--border)}
+[aria-label="Разделы поездки"] .button{border:0;border-bottom:2px solid transparent;border-radius:0;padding:8px 4px;color:var(--text-2)}
+[aria-label="Разделы поездки"] .button:hover{color:var(--text-1);background:var(--bg)}
+[aria-label="Разделы поездки"] [aria-current=page]{border-bottom-color:var(--text-1);color:var(--text-1);font-weight:600}
+.place-controls{display:grid;gap:8px}
+.place-controls .tabs{align-items:center}
+#place-filter{width:auto;max-width:min(100%,180px);margin-inline-start:auto}
+.place-controls [aria-pressed=true]{background:var(--surface-dim);border-color:var(--text-2);font-weight:600}
+.place-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:16px}
+.place-tile{display:grid;gap:4px;border:0;padding:0;background:none;text-align:left;align-content:start}
+.place-tile strong{font-size:16px;font-weight:600}
+.place-tile:hover strong{text-decoration:underline;text-underline-offset:4px}
+.place-tile small{font-size:13px;font-variant-numeric:tabular-nums}
+.place-image{display:block;width:100%;aspect-ratio:2.1;object-fit:cover;border-radius:var(--r);background:var(--surface-dim)}
+.place-detail{max-width:560px}
+.place-detail .back{justify-self:start;margin:0}
+.place-detail .place-image{aspect-ratio:1.8}
+#own-map{min-height:232px;border-radius:var(--r);background:var(--surface-dim)}

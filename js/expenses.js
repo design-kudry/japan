@@ -34,9 +34,9 @@ const EXPENSES=[
 ];
 
 function initExpensesPage() {
-  renderSiteNav({ page: 'expenses' });
   const main = document.getElementById('expenses-main');
   if (!main) return;
+  renderSiteNav({ page: 'expenses' });
   main.innerHTML = `
   <div class="day-header">
     <div class="day-index">17–30 сентября</div>
