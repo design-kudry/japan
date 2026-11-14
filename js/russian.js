@@ -82,7 +82,7 @@ function fallbackTeaser(place){
 }
 
 /** Visible card/detail copy: polished source text, else a category “why go” teaser. */
-export function placeDescription(place,compact=false){
+function rawPlaceDescription(place,compact=false){
  if(compact&&place?.shortDesc)return place.shortDesc;
  if(!compact&&(place?.authorSupplied||/^japan_(places_guide|more_destinations|popular_destinations)\.md/.test(place?.metadataOrigin||''))&&place?.desc)return place.desc;
  const polished=polishDescription(russianOnly(place?.desc)||place?.desc);
@@ -97,6 +97,11 @@ export function placeDescription(place,compact=false){
  }
  return fallbackTeaser(place);
 }
+
+export function capitalizeDescription(value=''){
+ return String(value).replace(/(^|\n\s*\n)([^\p{L}]*)(\p{L})/gu,(_,start,prefix,letter)=>start+prefix+letter.toLocaleUpperCase('ru'));
+}
+export function placeDescription(place,compact=false){return capitalizeDescription(rawPlaceDescription(place,compact));}
 
 /** Keep only descriptions worth storing on a place object. */
 export function usefulPlaceDesc(raw){

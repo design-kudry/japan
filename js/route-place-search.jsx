@@ -1,3 +1,4 @@
+import {PlacePhotoCarousel} from './place-photo-carousel.jsx';
 import {PlacePhoto} from './place-loading.jsx';
 import {useState,useEffect,useRef} from 'react';
 import {flushSync} from 'react-dom';
@@ -43,8 +44,8 @@ export function RoutePlacePreview({place:original,saved,onSave,onOpen,onSchedule
  useEffect(()=>{setExtra({});setEnriching(true);const request=new AbortController();enrichPlaces([original],request.signal,patches=>setExtra(patches[placeId(original)]||{})).catch(()=>{}).finally(()=>{if(!request.signal.aborted)setEnriching(false);});return()=>request.abort();},[placeId(original)]);
  const place={...original,...extra,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price};
  return <article className="constructor-place-preview" aria-label="Выбранное место">
+  <PlacePhotoCarousel place={place} pending={enriching} onOpen={()=>onOpen(place)}/>
   <button className="constructor-preview-open" onClick={()=>onOpen(place)}>
-   <PlacePhoto src={place.img} fallbackSrc={place.imageOriginal} pending={enriching}/>
 
    <div className="constructor-preview-copy"><h2>{place.name}</h2><p>{placeDescription(place,true)}</p><span>{placeRouteMeta(place)}</span></div>
   </button>

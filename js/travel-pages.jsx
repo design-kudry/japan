@@ -1,3 +1,5 @@
+import {PlacePhotoCarousel} from './place-photo-carousel.jsx';
+import {photoList} from './photo-gallery.js';
 import {libraryPlace,libraryPlaces,inBounds} from './place-library.js';
 import {PlacePhoto} from './place-loading.jsx';
 import AddPlaceCatalog from './add-place-catalog.jsx';
@@ -17,8 +19,7 @@ function SavePlace({place,saved,onSave}) {
 }
 export function PlaceTile({place,saved,onSave,onOpen,compact=false}) {
  place=libraryPlace(place);
- return <article className={'places-tile'+(compact?' places-tile-map':'')}><button className="places-tile-open" onClick={()=>onOpen(place)}>
- <PlacePhoto src={place.img} fallbackSrc={place.imageOriginal}/>
+ return <article className={'places-tile'+(compact?' places-tile-map':'')}><PlacePhotoCarousel place={place} onOpen={()=>onOpen(place)}/><button className="places-tile-open" onClick={()=>onOpen(place)}>
  <div className="places-tile-copy"><strong>{place.name}</strong><p>{placeDescription(place,true)}</p><span className="places-tile-meta">{placeRouteMeta(place)}</span></div></button>
  <SavePlace place={place} saved={saved} onSave={onSave}/></article>;
 }
@@ -62,14 +63,14 @@ export function PlaceDetail({place:original,days,saved,onSave,onSchedule,onRemov
  const place={...original,...extra,name:original.name,shortDesc:original.shortDesc,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price,duration:original.duration||extra.duration,category:original.category||extra.category};
  const metadata=placeMeta(place);
  const [gallery,setGallery]=useState([]),[photoOpen,setPhotoOpen]=useState(false),[photoIndex,setPhotoIndex]=useState(0);
- const photos=[...(place.img?[{img:place.img,imageOriginal:place.imageOriginal,imageSource:place.imageSource,imageCredit:place.imageCredit,imageLicense:place.imageLicense}]:[]),...gallery].filter((p,i,list)=>list.findIndex(x=>x.imageSource&&x.imageSource===p.imageSource||x.img===p.img)===i);
+ const photos=photoList(place,gallery);
  useEffect(()=>{setGallery([]);setPhotoIndex(0);const request=new AbortController();placeGallery(original,request.signal).then(setGallery).catch(()=>{});return()=>request.abort();},[placeId(original)]);
  const paragraphs=(placeDescription(place)||'Описание пока не найдено').split(/\n\s*\n/).flatMap(text=>{const sentences=text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g)||[text];const result=[];for(let i=0;i<sentences.length;i+=2)result.push(sentences.slice(i,i+2).join('').trim());return result;});
 
  const existing=days.find(d=>d.places?.some(p=>placeId(p)===placeId(place)));
  const [date,setDate]=useState(existing?.date||initialDate||days[0]?.date||''),[message,setMessage]=useState(''),[assigned,setAssigned]=useState(existing?.date||'');
  return <Modal open className={"place-detail-modal"+(constructorMode?" constructor-detail-modal":"")} disableTransition disableHeightTransition onOpenChange={v=>{if(!v)onClose();}} aria-label={place.name}>
- <article className="place-detail-screen"><div className="place-detail-hero">{photos.length?<button className="place-photo-open" aria-label="Открыть фотографии" onClick={()=>setPhotoOpen(true)}><PlacePhoto src={photos[0].img} fallbackSrc={photos[0].imageOriginal} alt={place.name} lazy={false}/><span className="place-photo-count">Фото{photos.length>1?' · '+photos.length:''}</span></button>:<PlacePhoto pending={enriching} alt={place.name}/>}<Button className="place-detail-back" view="flat" size="xl" aria-label="Закрыть описание" onClick={onClose}><Icon data={ChevronLeft} size={20}/></Button><SavePlace place={place} saved={saved} onSave={onSave}/></div>
+ <article className="place-detail-screen"><div className="place-detail-hero"><PlacePhotoCarousel place={place} photos={photos} pending={enriching} eager onIndexChange={setPhotoIndex} onOpen={index=>{setPhotoIndex(index);setPhotoOpen(true);}}/><Button className="place-detail-back" view="flat" size="xl" aria-label="Закрыть описание" onClick={onClose}><Icon data={ChevronLeft} size={20}/></Button><SavePlace place={place} saved={saved} onSave={onSave}/></div>
  <div className="place-detail-content"><h2>{place.name}</h2><div className="place-detail-description">{paragraphs.map((text,i)=><p key={i}>{text}</p>)}</div><dl className="place-detail-meta"><div><dt>Время работы</dt><dd>{placeRouteMeta({...place,price:''})}</dd></div>{metadata.price&&<div><dt>Билет</dt><dd>{metadata.price}</dd></div>}{place.duration&&<div><dt>На посещение</dt><dd>{place.duration}</dd></div>}</dl>{place.descriptionUrl&&<a className="place-source" href={place.descriptionUrl} target="_blank" rel="noopener noreferrer">Wikipedia · {place.descriptionLicense}</a>}{place.metaSource&&<a className="place-source" href={place.metaSource} target="_blank" rel="noopener noreferrer">Часы и билет: {place.metaProvider||'Wikivoyage'}{place.metaLicense?' · '+place.metaLicense:''}</a>}{place.imageSource&&<a className="place-source" href={place.imageSource} target="_blank" rel="noopener noreferrer">Фото: {[place.imageCredit,place.imageLicense].filter(Boolean).join(' · ')}</a>}</div>
  {days.length>0&&<footer className="place-detail-footer"><Select size="xl" width="max" aria-label="День посещения" value={[date]} onUpdate={v=>setDate(v[0])} options={days.map(d=>({value:d.date,content:d.label}))}/><Button size="xl" aria-label={assigned===date?'Убрать из маршрута':assigned?'Перенести':'В маршрут'} onClick={()=>{const removing=assigned===date;const result=removing?onRemove(place):onSchedule(date,place);setMessage(result||'');if(!result)setAssigned(removing?'':date);}}><Icon data={assigned===date?TrashBin:Plus} size={20}/>{assigned===date?'Убрать':assigned?'Перенести':'В маршрут'}</Button></footer>}
  {message&&<p className="place-detail-message" role="alert">{message}</p>}
