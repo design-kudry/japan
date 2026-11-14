@@ -1,3 +1,4 @@
+import {libraryPlace,libraryPlaces,registerPlaces,inBounds,hasRecommendationCopy,russianPlaces} from './place-library.js';
 import {fetchPlaceJson,wikiPlaces} from './wiki-places.js';
 import {hasCyrillic,russianOnly,russianCountry} from './russian.js';
 const cache=new Map();
@@ -40,14 +41,14 @@ export function isAttraction(p){
 export function isDiscoveryPlace(p){
  if(p.recommended||p.metadataOrigin)return isAttraction(p);
  if(!isAttraction(p)||!p.wikidata||!p.wiki||!p.img)return false;
- if(!/[а-яa-z]/i.test(p.name||''))return false;
+ if(!hasRecommendationCopy(p))return false;
  if(/station|railway|metro|school|university|cemetery|defunct|demolished|станци|метро|кладбищ/i.test([p.name,p.kind].join(' ')))return false;
  return String(p.desc||p.discoveryDesc||'').length>=60||String(p.kind||'').length>=30;
 }
 function fromPhoton(f){const p=f.properties;const country=russianCountry(p.countrycode,p.country);return {id:'osm:'+p.osm_type+':'+p.osm_id,name:p.name||p.city,lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],category:p.osm_value,city:russianOnly(p.city),country,address:[p.street,p.housenumber,p.city].filter(hasCyrillic).concat(country).filter(Boolean).join(', '),isCity:['city','town','village'].includes(p.osm_value),extent:p.extent};}
 export function mergePlaces(items){
  const result=[],byId=new Map(),byWiki=new Map(),byName=new Map();
- for(const p of items){const id=placeId(p),name=normalizePlaceText(p.name);const previous=byId.get(id)||(p.wikidata&&byWiki.get(p.wikidata))||(byName.get(name)||[]).find(x=>Math.hypot(x.lat-p.lat,x.lng-p.lng)<.002);
+ for(const item of items){const p=libraryPlace(item);const id=placeId(p),name=normalizePlaceText(p.name);const previous=byId.get(id)||(p.wikidata&&byWiki.get(p.wikidata))||(byName.get(name)||[]).find(x=>Math.hypot(x.lat-p.lat,x.lng-p.lng)<.002);
  if(previous)Object.assign(previous,{...p,...previous,img:previous.img||p.img,desc:previous.desc||p.desc});
  else{result.push(p);if(!byName.has(name))byName.set(name,[]);byName.get(name).push(p);}
  const merged=previous||p;byId.set(id,merged);if(p.wikidata)byWiki.set(p.wikidata,merged);
@@ -80,17 +81,20 @@ async function photonArea(lat,lng,radius,signal){
  const data=await fetchPlaceJson('https://photon.komoot.io/reverse?'+params,signal);return (data.features||[]).map(fromPhoton).filter(isAttraction);
 }
 export async function placesInBounds(b,signal,onUpdate=()=>{}){
- if(b.zoom<5)return [];
- const key=[b.south,b.west,b.north,b.east].map(v=>v.toFixed(3)).join(',');if(cache.has(key))return cache.get(key);
- const lat=(b.south+b.north)/2,lng=(b.west+b.east)/2;
- const radius=Math.min(20,Math.max(.2,Math.hypot((b.north-b.south)*111,(b.east-b.west)*111*Math.cos(lat*Math.PI/180))/2));
- // One Photon probe + EN/RU wiki bbox — was 5 Photon corners and felt very slow on every map pan.
- const jobs=[
-  wikiPlaces('en',{generator:'geosearch',ggsbbox:[b.north,b.west,b.south,b.east].join('|'),ggslimit:'40',ggsnamespace:'0',ggsprop:'type'},signal).then(list=>list.filter(isDiscoveryPlace)),
-  wikiPlaces('ru',{generator:'geosearch',ggsbbox:[b.north,b.west,b.south,b.east].join('|'),ggslimit:'40',ggsnamespace:'0',ggsprop:'type'},signal).then(list=>list.filter(isDiscoveryPlace)),
- ];
- let partial=[];const streamed=jobs.map(job=>job.then(items=>{partial=mergePlaces([...partial,...items]).filter(p=>p.lat>=b.south&&p.lat<=b.north&&p.lng>=b.west&&p.lng<=b.east).slice(0,120);if(!signal?.aborted)onUpdate(partial);return items;}));
- const results=await Promise.allSettled(streamed);if(signal?.aborted)throw new DOMException('Aborted','AbortError');if(results.every(x=>x.status==='rejected'))throw Error('Не удалось загрузить места');
- const list=mergePlaces(results.flatMap(x=>x.status==='fulfilled'?x.value:[])).filter(p=>p.lat>=b.south&&p.lat<=b.north&&p.lng>=b.west&&p.lng<=b.east);
+ const local=()=>libraryPlaces().filter(p=>inBounds(p,b)&&isAttraction(p));
+ const publish=items=>{const list=mergePlaces([...local(),...items]).filter(p=>inBounds(p,b)).slice(0,120);if(!signal?.aborted)onUpdate(list);return list;};
+ publish([]);
+ if(b.zoom<5)return publish([]);
+ const key=[b.south,b.west,b.north,b.east].map(v=>v.toFixed(3)).join(',');
+ if(cache.has(key))return publish(cache.get(key));
+ const parameters={generator:'geosearch',ggsbbox:[b.north,b.west,b.south,b.east].join('|'),ggslimit:'40',ggsnamespace:'0',ggsprop:'type'};
+ const results=await Promise.allSettled(['ru','en'].map(async lang=>{
+  let items=await wikiPlaces(lang,parameters,signal);
+  items=await russianPlaces(items,signal);
+  const accepted=registerPlaces(items.filter(isDiscoveryPlace));publish(accepted);return accepted;
+ }));
+ if(signal?.aborted)throw new DOMException('Aborted','AbortError');
+ if(results.every(x=>x.status==='rejected')&&!local().length)throw Error('Не удалось загрузить места');
+ const list=publish(results.flatMap(x=>x.status==='fulfilled'?x.value:[]));
  if(cache.size>40)cache.delete(cache.keys().next().value);cache.set(key,list);return list;
 }

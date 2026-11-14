@@ -1,3 +1,4 @@
+import {libraryPlaces,registerPlaces,hasRecommendationCopy,russianPlaces} from './place-library.js';
 import {curatedCatalog} from './place-catalog.js';
 import {fetchPlaceJson,wikiPlaces} from './wiki-places.js';
 import {canonicalCountry,countryMatches} from './country-places.js';
@@ -29,20 +30,21 @@ export async function discoverCities(country,signal,expand=false){
 }
 
 export async function cityPlaces(city,signal,onUpdate=()=>{}){
- const key='places:'+cityKey(city);if(cache.has(key))return cache.get(key);
+ const key='places-v2:'+cityKey(city);if(cache.has(key))return registerPlaces(cache.get(key));
  try{const cached=JSON.parse(localStorage.getItem(key)||'null');if(cached?.places?.length&&Date.now()-cached.time<86400000)onUpdate(cached.places);}catch{}
  const center=await resolveCity(city,signal);
  const seeds=seedPlaces(city);if(seeds.length)onUpdate(seeds);
  const results=await Promise.allSettled([...['ru','en'].map(lang=>wikiPlaces(lang,{generator:'geosearch',ggscoord:center.lat+'|'+center.lng,ggsradius:'10000',ggslimit:'50',ggsnamespace:'0',ggsprop:'type'},signal)),wikiPlaces('ru',{generator:'search',gsrsearch:city.name+' достопримечательности',gsrlimit:'20',gsrnamespace:'0'},signal)]);
  if(signal?.aborted)throw new DOMException('Aborted','AbortError');if(results.every(r=>r.status==='rejected'))throw Error('Не удалось загрузить места');
- const list=mergePlaces(results.flatMap(r=>r.status==='fulfilled'?r.value:[])).filter(p=>isDiscoveryPlace(p)&&p.wikidata&&distanceMeters(center,p)<=10000);
+ const candidates=results.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(p=>p.wikidata&&distanceMeters(center,p)<=10000);
+ const list=mergePlaces(await russianPlaces(candidates,signal)).filter(isDiscoveryPlace);
  if(!list.length){cache.set(key,seeds);return seeds;}
  const countryId=(await countryEntity(city.country,signal)).id;
  let accepted=[...seeds];let successes=0;
  await Promise.all(list.reduce((chunks,p,i)=>{if(i%20===0)chunks.push([]);chunks.at(-1).push(p);return chunks;},[]).map(async batch=>{
  try{const d=await fetchPlaceJson('https://www.wikidata.org/w/api.php?'+new URLSearchParams({action:'wbgetentities',format:'json',origin:'*',ids:batch.map(p=>p.wikidata).join('|'),props:'labels|claims',languages:'ru|en'}),signal);successes++;
  const items=batch.filter(p=>cityAttraction(p,city,d.entities?.[p.wikidata])).filter(p=>d.entities?.[p.wikidata]?.claims?.P17?.some(c=>c.mainsnak?.datavalue?.value?.id===countryId)).map(p=>({...p,name:d.entities[p.wikidata]?.labels?.ru?.value||p.name,city:city.name,country:city.country}));
- accepted=mergePlaces([...accepted,...items]);if(!signal?.aborted)onUpdate(accepted);
+ accepted=registerPlaces(mergePlaces([...accepted,...items]).filter(hasRecommendationCopy));if(!signal?.aborted)onUpdate(accepted);
  }catch(e){if(signal?.aborted)throw e;}
  }));
  if(!successes)throw Error('Не удалось проверить места');
@@ -60,7 +62,7 @@ export function cityAttraction(place,city,entity={}){
  return !(entity.claims?.P31||[]).some(c=>administrative.has(c.mainsnak?.datavalue?.value?.id));
 }
 
-export function seedPlaces(city){return curatedCatalog.filter(p=>countryMatches(p.country,city.country)&&p.city===city.name).sort((a,b)=>(a.guideOrder??999)-(b.guideOrder??999));}
+export function seedPlaces(city){return libraryPlaces().filter(p=>countryMatches(p.country,city.country)&&p.city===city.name).sort((a,b)=>(a.guideOrder??999)-(b.guideOrder??999));}
 
 async function countryEntity(country,signal){
  const key='country:'+canonicalCountry(country);if(cache.has(key))return cache.get(key);

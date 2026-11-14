@@ -1,8 +1,10 @@
+import {libraryPlace,libraryPlaces,inBounds} from './place-library.js';
 import {curatedCatalog} from './place-catalog.js';
 import {PlacePhoto} from './place-loading.jsx';
 import {japanCatalog,japanExcluded} from './japan-catalog.js';
 window.JapanPlaces={places:japanCatalog,excluded:japanExcluded};
 window.CuratedPlaces=curatedCatalog;
+window.resolveLibraryPlace=libraryPlace;
 import AddPlaceCatalog from './add-place-catalog.jsx';
 import {enrichPhotos,enrichPlaces} from './place-enrichment.js';
 import {hasCyrillic} from './russian.js';
@@ -516,7 +518,7 @@ function RouteExplorer({day,places,loadMap,onPlace,savedPlaces,toggleSaved,child
     const coast=performance.now()-d.time<80?d.speed*90:0;
     settle(yRef.current+coast,true);
   }
-  const mapPlaces=mergePlaces([...(selected?[selected]:[]),...places,...savedPlaces,...curatedCatalog.filter(p=>bounds&&p.lat>=bounds.south&&p.lat<=bounds.north&&p.lng>=bounds.west&&p.lng<=bounds.east),...nearby]);
+  const mapPlaces=mergePlaces([...(selected?[selected]:[]),...places,...savedPlaces,...libraryPlaces().filter(p=>bounds&&inBounds(p,bounds)),...nearby]);
   const sheetScrollable=mode!=='peek'&&mode!=='browse';
   return <div className="route-explorer" ref={stage} data-sheet={mode} inert={blocked?'':undefined} aria-hidden={blocked||undefined}>
     <EditorMap day={day} places={mapPlaces} initialPlaces={places} loadMap={loadMap} drawRoute routePlaces={places} focusPlace={focus} onViewport={setBounds} onMapClick={()=>{setSelected(null);setCards([]);setFocus(null);setError('');snap('half');}} onSelect={place=>{const fromRoute=places.some(p=>placeId(p)===placeId(place));openCards(place,fromRoute?places:mergePlaces([place,...nearby.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng))]));snap('browse');}}/>

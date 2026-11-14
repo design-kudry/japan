@@ -1,3 +1,4 @@
+import {libraryPlace,libraryPlaces,inBounds} from './place-library.js';
 import {PlacePhoto} from './place-loading.jsx';
 import AddPlaceCatalog from './add-place-catalog.jsx';
 import {curatedCatalog} from './place-catalog.js';
@@ -15,6 +16,7 @@ function SavePlace({place,saved,onSave}) {
  return <><FavoriteButton className="place-heart" saved={saved} label={(saved?'Убрать из избранного: ':'Хочу посетить: ')+place.name} onClick={()=>setError(onSave(place)===false)}/>{error&&<span role="alert">Не удалось сохранить</span>}</>;
 }
 export function PlaceTile({place,saved,onSave,onOpen,compact=false}) {
+ place=libraryPlace(place);
  return <article className={'places-tile'+(compact?' places-tile-map':'')}><button className="places-tile-open" onClick={()=>onOpen(place)}>
  <PlacePhoto src={place.img} fallbackSrc={place.imageOriginal}/>
  <div className="places-tile-copy"><strong>{place.name}</strong><p>{placeDescription(place,true)}</p><span className="places-tile-meta">{placeRouteMeta(place)}</span></div></button>
@@ -25,10 +27,10 @@ export function PlacesMap({places,saved,onSave,onOpen,onClose,MapComponent,loadM
  const [bounds,setBounds]=useState(null),[remote,setRemote]=useState([]),[focus,setFocus]=useState(initialSelected),[selected,setSelected]=useState(initialSelected),[cards,setCards]=useState(initialSelected?places:[]);
  const carousel=useRef(null),scrollTimer=useRef(null),positioning=useRef(false),pendingSearch=useRef(null);
  const [details,setDetails]=useState({});
- const decorate=p=>{const patch=details[placeId(p)]||{};return {...p,...patch,img:p.img||patch.img,desc:p.desc||patch.desc,hours:p.hours||patch.hours,price:p.price||patch.price};};
+ const decorate=input=>{const p=libraryPlace(input);const patch=details[placeId(p)]||{};return {...p,...patch,name:p.name,shortDesc:p.shortDesc,img:p.img||patch.img,desc:p.desc||patch.desc,hours:p.hours||patch.hours,price:p.price||patch.price};};
  useEffect(()=>()=>clearTimeout(scrollTimer.current),[]);
  useEffect(()=>{if(!initialSelected)return;const i=places.findIndex(p=>placeId(p)===placeId(initialSelected));if(carousel.current)carousel.current.scrollTo({left:Math.max(0,i)*(carousel.current.children[1]?.offsetLeft-carousel.current.children[0]?.offsetLeft||carousel.current.children[0]?.clientWidth+6||1),behavior:'instant'});},[]);
- const basePins=useMemo(()=>routeMode?places:[...new Map([...(selected?[selected]:[]),...places,...curatedCatalog.filter(p=>bounds&&p.lat>=bounds.south&&p.lat<=bounds.north&&p.lng>=bounds.west&&p.lng<=bounds.east),...remote].map(p=>[placeId(p),p])).values()],[places,remote,routeMode,selected]);
+ const basePins=useMemo(()=>routeMode?places:[...new Map([...(selected?[selected]:[]),...places,...libraryPlaces().filter(p=>bounds&&inBounds(p,bounds)),...remote].map(p=>[placeId(p),p])).values()],[places,remote,routeMode,selected,bounds]);
  const pins=useMemo(()=>mergePlaces(basePins.map(decorate)).filter(p=>routeMode||isAttraction(p)),[basePins,details,routeMode]);
  const metadataKey=basePins.filter(p=>(p.id?.startsWith('osm:')||p.wiki)).map(placeId).sort().join('|');
  useEffect(()=>{if(routeMode||!metadataKey)return;const request=new AbortController();enrichPlaces(basePins,request.signal,patches=>setDetails(old=>({...old,...patches}))).catch(()=>{});return()=>request.abort();},[metadataKey,routeMode]);
@@ -53,10 +55,11 @@ export function PlacesView({saved,onOpen,onSave,MapComponent,loadMap,fallbackCit
  return <AddPlaceCatalog embedded tripCities={destinations} days={days} saved={saved} onSave={onSave} onOpenPlace={onOpen} MapComponent={MapComponent} loadMap={loadMap}/>;
 }
 export function PlaceDetail({place:original,days,saved,onSave,onSchedule,onRemove,onClose,initialDate,constructorMode=false}) {
+ original=libraryPlace(original);
  const [extra,setExtra]=useState({}),[enriching,setEnriching]=useState(true);
  // Always enrich — hours/price/photo may still be missing even when desc/img exist.
  useEffect(()=>{setEnriching(true);const request=new AbortController();enrichPlaces([original],request.signal,patches=>setExtra(patches[placeId(original)]||{})).catch(()=>{}).finally(()=>{if(!request.signal.aborted)setEnriching(false);});return()=>request.abort();},[placeId(original)]);
- const place={...original,...extra,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price,duration:original.duration||extra.duration,category:original.category||extra.category};
+ const place={...original,...extra,name:original.name,shortDesc:original.shortDesc,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price,duration:original.duration||extra.duration,category:original.category||extra.category};
  const metadata=placeMeta(place);
  const [gallery,setGallery]=useState([]),[photoOpen,setPhotoOpen]=useState(false),[photoIndex,setPhotoIndex]=useState(0);
  const photos=[...(place.img?[{img:place.img,imageOriginal:place.imageOriginal,imageSource:place.imageSource,imageCredit:place.imageCredit,imageLicense:place.imageLicense}]:[]),...gallery].filter((p,i,list)=>list.findIndex(x=>x.imageSource&&x.imageSource===p.imageSource||x.img===p.img)===i);

@@ -45,7 +45,7 @@ const visitHints={
  memorial:'Мемориал — короткая, но значимая остановка',
  bridge:'Мост — чаще видовая/транзитная точка',
  theatre:'Театр: имеет смысл с билетом на постановку',
- attraction:'Достопримечательность — уточните, зачем именно она вам',
+ attraction:'',
 };
 
 const uselessDesc=/^(у этого термина|может означать|может относиться|disambiguation|may refer to|статья[^.]*заготовк|незавершённ|stub\b)/i;
@@ -78,9 +78,6 @@ export function polishDescription(raw=''){
 function fallbackTeaser(place){
  const cat=categoryName(place);
  const where=russianOnly(place?.city)||russianOnly(place?.address);
- const hint=visitHints[place?.category]||'';
- if(hint&&where)return `${cat||'Место'} · ${where}. ${hint}`;
- if(hint)return hint;
  return [cat,where].filter(Boolean).join(' · ');
 }
 

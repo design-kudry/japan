@@ -62,7 +62,7 @@ test('automatic discovery excludes unexplained local points without filtering us
  assert.equal(isDiscoveryPlace({name:'The Fountain Boy',category:'artwork'}),false);
  assert.equal(isDiscoveryPlace({name:'星を探る',category:'artwork'}),false);
  assert.equal(isDiscoveryPlace(japanCatalog[0]),true);
- assert.equal(isDiscoveryPlace({name:'Museum',category:'museum',wikidata:'Q1',wiki:{title:'Museum'},img:'https://example.org/photo.jpg',desc:'A museum devoted to the history of the city and its collections of art and archaeology.'}),true);
+ assert.equal(isDiscoveryPlace({name:'Museum',category:'museum',wikidata:'Q1',wiki:{title:'Museum'},img:'https://example.org/photo.jpg',desc:'A museum devoted to the history of the city and its collections of art and archaeology.'}),false);
 });
 
 test('country directory exposes cities across the country, without external geocoding',async()=>{
@@ -106,4 +106,26 @@ test('curated cards separate nearby destinations and include Edinburgh',async()=
  for(const [a,b] of [['Big Ben','Palace of Westminster'],['Holland Park','Kyoto Garden'],['Soho','Chinatown, London']]){const x=ukCatalog.find(p=>p.nameEn===a),y=ukCatalog.find(p=>p.nameEn===b);assert.ok(x&&y);assert.notEqual(x.id,y.id);assert.notDeepEqual([x.lat,x.lng],[y.lat,y.lng]);}
  const galleries=ed.filter(p=>p.nameEn.includes('Modern Art'));assert.equal(galleries.length,2);assert.notDeepEqual([galleries[0].lat,galleries[0].lng],[galleries[1].lat,galleries[1].lng]);
  assert.ok(!ukCatalog.some(p=>/Big Ben &|Soho &|Holland Park &|High Street and/.test(p.nameEn)));
+});
+
+test('shared library always prefers authored copy even when map data comes first',async()=>{
+ const {curatedCatalog}=await import('../js/place-catalog.js');const {libraryPlace,registerPlaces}=await import('../js/place-library.js');const p=curatedCatalog.find(p=>p.wikidata);
+ const raw={id:'wd:'+p.wikidata,wikidata:p.wikidata,name:'English replacement',desc:'Generic source copy',lat:p.lat,lng:p.lng};
+ assert.equal(libraryPlace(raw).name,p.name);assert.equal(libraryPlace(raw).desc,p.desc);
+ const result=registerPlaces([raw])[0];assert.equal(result.id,p.id);assert.equal(result.shortDesc,p.shortDesc);
+});
+test('automatic recommendations require real Russian copy and never use editorial placeholders',async()=>{
+ const {placeDescription}=await import('../js/russian.js');
+ assert.equal(isDiscoveryPlace({name:'Музей города',desc:'Музей хранит коллекцию средневековой живописи и рассказывает об истории города и его жителей.',category:'attraction',wiki:{lang:'ru'},wikidata:'Q1234',img:'https://example.org/photo.jpg'}),true);
+ assert.ok(!placeDescription({category:'attraction',name:'House of Commons Library'}).includes('уточните'));
+});
+test('every selectable country has a nonempty local city directory',async()=>{
+ const fs=await import('node:fs/promises');
+ for(const {code} of countryOptions){const rows=JSON.parse(await fs.readFile(new URL('../places/cities/'+code+'.json',import.meta.url),'utf8'));assert.ok(rows.length,code);assert.ok(rows.every(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)),code);}
+});
+
+test('viewport uses the same authored record immediately without an external API at broad zoom',async()=>{
+ const {curatedCatalog}=await import('../js/place-catalog.js');const {placesInBounds}=await import('../js/world-places.js');const p=curatedCatalog.find(p=>p.nameEn==='Big Ben');let published=[];
+ const result=await placesInBounds({south:p.lat-.001,north:p.lat+.001,west:p.lng-.001,east:p.lng+.001,zoom:4},undefined,items=>published=items);
+ assert.ok(result.some(x=>x.id===p.id&&x.name===p.name&&x.desc===p.desc));assert.deepEqual(published,result);
 });

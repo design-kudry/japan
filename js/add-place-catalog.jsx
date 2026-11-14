@@ -1,3 +1,4 @@
+import {libraryPlace,libraryPlaces} from './place-library.js';
 import {PlaceCardSkeleton} from './place-loading.jsx';
 import TripSegmentedControl from './trip-segmented-control.jsx';
 import {curatedCatalog} from './place-catalog.js';
@@ -17,6 +18,7 @@ export default function AddPlaceCatalog({tripCities=[],days,current,saved,onSave
  const [countries,setCountries]=useState(initial),[city,setCity]=useState(null),[favorites,setFavorites]=useState(false),[picker,setPicker]=useState(false),[draft,setDraft]=useState([]),[countryQuery,setCountryQuery]=useState(''),[type,setType]=useState(''),[cost,setCost]=useState(''),[sort,setSort]=useState(false),[query,setQuery]=useState(''),[search,setSearch]=useState(false),[detail,setDetail]=useState(null),[map,setMap]=useState(false),[mapTarget,setMapTarget]=useState(null),[groups,setGroups]=useState([]),[discoveryLoading,setDiscoveryLoading]=useState(false),[discoveryError,setDiscoveryError]=useState(false),[retry,setRetry]=useState(0),[filterSheet,setFilterSheet]=useState(null),[draftFilter,setDraftFilter]=useState(''),[countrySuggestions,setCountrySuggestions]=useState([]),[cityLimit,setCityLimit]=useState(24),[hasMoreCities,setHasMoreCities]=useState(false);
  const loadSentinel=useRef(null),loadLock=useRef(false),groupContext=useRef('');
  const selection=countries.join('|');
+ useEffect(()=>{const refresh=()=>setGroups(old=>old.map(g=>({...g,places:mergePlaces([...seedPlaces(g.city),...g.places.map(libraryPlace)])})));window.addEventListener('place-library-updated',refresh);return()=>window.removeEventListener('place-library-updated',refresh);},[]);
  useEffect(()=>{const refresh=()=>setGroups(old=>old.map(g=>({...g,places:g.places.map(p=>{const seed=seedPlaces(g.city).find(s=>s.id===p.id);return seed?.img?{...p,...seed}:p;})})));window.addEventListener('japan-photos-ready',refresh);return()=>window.removeEventListener('japan-photos-ready',refresh);},[]);
  useEffect(()=>{setCityLimit(24);},[selection]);
  useEffect(()=>{
@@ -47,7 +49,7 @@ export default function AddPlaceCatalog({tripCities=[],days,current,saved,onSave
  const display=useMemo(()=>{
   if(favorites){const list=saved.filter(filter);if(city)return [{city,places:list.filter(p=>p.city===city.name),loading:false}];return [{city:{name:'Хочу посетить',country:''},places:list,loading:false}];}
   let list=city?groups.filter(g=>cityKey(g.city)===cityKey(city)):groups;
-  if(!countries.length&&!city){const byCountry=new Map();for(const p of mergePlaces([...curatedCatalog,...countrySuggestions,...groups.flatMap(g=>g.places)])){if(!p.country)continue;let group=byCountry.get(p.country);if(!group){group={city:{name:p.country,country:p.country,isCountry:true},places:[],loading:false};byCountry.set(p.country,group);}group.places.push(p);}list=[...byCountry.values()];}
+  if(!countries.length&&!city){const byCountry=new Map();for(const p of mergePlaces([...libraryPlaces(),...countrySuggestions,...groups.flatMap(g=>g.places)])){if(!p.country)continue;let group=byCountry.get(p.country);if(!group){group={city:{name:p.country,country:p.country,isCountry:true},places:[],loading:false};byCountry.set(p.country,group);}group.places.push(p);}list=[...byCountry.values()];}
 
   return sort?[...list].sort((a,b)=>a.city.name.localeCompare(b.city.name,'ru')):list;
  },[groups,city,favorites,saved,type,cost,sort,selection,countrySuggestions]);
@@ -65,7 +67,7 @@ export default function AddPlaceCatalog({tripCities=[],days,current,saved,onSave
    {[['type','Чем заняться',type,PLACE_TYPES],['cost','Стоимость',cost,[{value:'free',content:'Бесплатно'},{value:'paid',content:'Платно'}]]].map(([key,label,value,options])=><div className="add-country-chip" key={key}><Button view="normal" size="l" aria-label={label} onClick={()=>{setDraftFilter(value);setFilterSheet(key);}}>{options.find(o=>o.value===value)?.content||label}<Icon data={ChevronDown} size={16}/></Button></div>)}
   </div></header>
   <main className="add-catalog-content" aria-busy={discoveryLoading||groups.some(g=>g.loading)||undefined}>
-   {!!countries.length&&!groups.length&&!favorites&&(discoveryLoading?<div className="add-city-section" role="status" aria-label="Загружаем места"><div className="add-city-carousel"><div><PlaceCardSkeleton/></div><div><PlaceCardSkeleton/></div></div></div>:<p>Города не найдены. Выберите другую страну или воспользуйтесь поиском.</p>)}
+   {!!countries.length&&!groups.length&&!favorites&&(discoveryLoading?<div className="add-city-section" role="status" aria-label="Загружаем места"><div className="add-city-carousel"><div><PlaceCardSkeleton/></div><div><PlaceCardSkeleton/></div></div></div>:<p>{discoveryError?'Не удалось загрузить список городов. Попробуйте ещё раз.':'В справочнике пока нет городов этой страны. Найдите город через поиск.'}{discoveryError&&<Button view="flat" onClick={()=>setRetry(v=>v+1)}>Повторить</Button>}</p>)}
    {!discoveryLoading&&display.length>0&&display.every(g=>!g.loading&&!g.error&&!g.places.some(filter))&&<p className="trip-empty-day">Нет мест по выбранным фильтрам</p>}
    {display.map(g=>{const items=g.places.filter(filter);if(!items.length&&!g.loading&&!g.error&&!city&&!favorites)return null;return <section className="add-city-section" key={cityKey(g.city)}><Button className="add-city-heading" view="flat" onClick={()=>{if(!city&&!favorites){if(g.city.isCountry)setCountries([g.city.country]);else openCity(g.city);}}} disabled={!!city||favorites}><span>{g.city.name}</span>{!city&&!favorites&&<Icon data={ChevronRight} size={20}/>}</Button>
     {g.error&&!items.length&&<p role="alert">Не удалось загрузить места. <Button view="flat" onClick={()=>setRetry(v=>v+1)}>Повторить</Button></p>}
@@ -73,7 +75,7 @@ export default function AddPlaceCatalog({tripCities=[],days,current,saved,onSave
     <div className={city||favorites?'add-city-grid':'add-city-carousel'} aria-label={'Места: '+g.city.name} tabIndex={city||favorites?undefined:0} aria-busy={g.loading||undefined}>{items.map(p=><div key={placeId(p)}><PlaceTile place={p} saved={saved.some(s=>placeId(s)===placeId(p))} onSave={onSave} onOpen={openPlace}/></div>)}{g.loading&&<><div><PlaceCardSkeleton/></div><div><PlaceCardSkeleton/></div></>}</div>
    </section>;})}
    {hasMoreCities&&!city&&!favorites&&<div ref={loadSentinel} className="catalog-load-sentinel" aria-hidden="true"/>}{discoveryLoading&&groups.length>0&&!groups.some(g=>g.loading)&&<div className="add-city-section" role="status" aria-label="Загружаем места"><div className="add-city-carousel"><div><PlaceCardSkeleton/></div><div><PlaceCardSkeleton/></div></div></div>}
-   <p className="places-source"><a href="https://www.geonames.org/" target="_blank" rel="noreferrer">Города: GeoNames · CC BY</a></p>
+   <details className="places-source"><summary>Источники данных</summary><a href="https://www.geonames.org/" target="_blank" rel="noreferrer">GeoNames · CC BY 4.0</a></details>
   </main>
   <Button className={embedded?"places-map-button":"add-catalog-map"} view="action" size="xl" onClick={()=>{setMapTarget(null);setMap(true);}}><Icon data={MapPin} size={20}/>Карта</Button>
   {filterSheet&&<Modal open className="add-country-modal" disableTransition onOpenChange={v=>{if(!v)setFilterSheet(null);}} aria-label={filterSheet==='type'?'Чем заняться':'Стоимость'}><section className="add-country-sheet"><header><h2>{filterSheet==='type'?'Чем заняться':'Стоимость'}</h2><Button view="flat" onClick={()=>setFilterSheet(null)}>Отмена</Button></header><div className="add-country-list">{[{value:'',content:'Все'},...(filterSheet==='type'?PLACE_TYPES:[{value:'free',content:'Бесплатно'},{value:'paid',content:'Платно'}])].map(o=><Radio key={o.value} value={o.value} checked={draftFilter===o.value} onUpdate={()=>setDraftFilter(o.value)}>{o.content}</Radio>)}</div><Button view="action" size="xl" width="max" onClick={()=>{(filterSheet==='type'?setType:setCost)(draftFilter);setFilterSheet(null);}}>Применить</Button></section></Modal>}

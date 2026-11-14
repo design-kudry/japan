@@ -19,6 +19,7 @@ const RU_PLACE_NAMES={
 };
 // The persisted route key is name|lat|lng, so a renamed place keeps its old key as id.
 function localizePlace(place){
+ if(window.resolveLibraryPlace)place=window.resolveLibraryPlace(place);
  const curated=place.metadataOrigin&&(window.CuratedPlaces||[]).find(p=>p.id===place.id);
  if(curated)return {...place,...curated,id:place.id,img:curated.img||place.img};
  const name=RU_PLACE_NAMES[place.name];
