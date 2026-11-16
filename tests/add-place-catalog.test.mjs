@@ -87,12 +87,13 @@ test('merging discovery preserves authored identity and accepts source aliases',
 
 test('London and York author guides are first-class curated destinations',async()=>{
  const {ukCatalog}=await import('../js/uk-catalog.js');const {curatedCatalog}=await import('../js/place-catalog.js');const {seedPlaces,discoverCities}=await import('../js/add-place-data.js');
- assert.equal(ukCatalog.filter(p=>p.city==='Лондон').length,92);assert.equal(ukCatalog.filter(p=>p.city==='Йорк').length,48);
+ assert.equal(ukCatalog.filter(p=>p.city==='Лондон').length,150);assert.equal(ukCatalog.filter(p=>p.city==='Йорк').length,48);
  assert.equal(new Set(ukCatalog.map(p=>p.id)).size,ukCatalog.length);
  assert.ok(ukCatalog.every(p=>p.authorSupplied&&p.recommended&&p.desc&&p.shortDesc&&p.metaSource&&p.coordinateSource&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)));
  assert.equal(seedPlaces({name:'Йорк',country:'Великобритания'})[0].nameEn,'York Minster');assert.equal(seedPlaces({name:'Йорк',country:'США'}).length,0);
- assert.deepEqual((await discoverCities('Великобритания')).map(c=>c.name).sort(),['Йорк','Лондон','Эдинбург']);
- assert.equal(curatedCatalog.length,japanCatalog.length+228);
+ assert.equal((await discoverCities('Великобритания')).length,31);
+ assert.ok((await discoverCities('Великобритания')).some(c=>c.name==='Манчестер'));
+ assert.equal(curatedCatalog.length,japanCatalog.length+466);
  assert.ok(!ukCatalog.some(p=>/Market/.test(p.nameEn)));
  const byName=name=>ukCatalog.find(p=>p.nameEn===name);assert.notEqual(byName('Bootham Bar').id,byName('York City Walls').id);assert.notEqual(byName('Ouse Bridge').id,byName('Lendal Bridge').id);assert.notEqual(byName('Lift 109').id,byName('Battersea Power Station').id);
  assert.ok(Math.abs(byName('V&A East Storehouse').lng+.02118)<.0001);
@@ -128,4 +129,20 @@ test('viewport uses the same authored record immediately without an external API
  const {curatedCatalog}=await import('../js/place-catalog.js');const {placesInBounds}=await import('../js/world-places.js');const p=curatedCatalog.find(p=>p.nameEn==='Big Ben');let published=[];
  const result=await placesInBounds({south:p.lat-.001,north:p.lat+.001,west:p.lng-.001,east:p.lng+.001,zoom:4},undefined,items=>published=items);
  assert.ok(result.some(x=>x.id===p.id&&x.name===p.name&&x.desc===p.desc));assert.deepEqual(published,result);
+});
+
+test('three new UK guides import real places once and keep all authored cities',async()=>{
+ const fs=await import('node:fs/promises');const {ukCatalog}=await import('../js/uk-catalog.js');
+ const source=JSON.parse(await fs.readFile(new URL('../docs/sources/uk-guides-2026-11-16.json',import.meta.url),'utf8'));
+ assert.equal(source.records.length,339);assert.equal(source.pending.length,0);assert.equal(source.excluded.length,11);assert.equal(source.merged.length,6);
+ assert.equal(ukCatalog.length,466);assert.equal(new Set(ukCatalog.map(p=>p.id)).size,466);
+ const wiki=ukCatalog.map(p=>p.wikidata).filter(Boolean);assert.equal(new Set(wiki).size,wiki.length);
+ assert.equal(new Set(ukCatalog.map(p=>p.city)).size,31);
+ for(const city of new Set(source.records.map(p=>p.city)))assert.ok(ukCatalog.some(p=>p.city===city),city);
+ for(const place of ukCatalog){assert.ok(place.coordinateSource&&Number.isFinite(place.lat)&&Number.isFinite(place.lng),place.name);assert.ok(place.lat>49&&place.lat<61&&place.lng>-9&&place.lng<3,place.name);assert.ok(place.shortDesc&&place.desc&&place.metaSource,place.name);}
+ assert.ok(!ukCatalog.some(p=>['House of MinaLima','The Sherlock Holmes Pub','Banksy Street Art Trail','Borough Market'].includes(p.nameEn)));
+ assert.equal(ukCatalog.find(p=>p.nameEn==='Big Ben').id,'wd:Q41225');
+ assert.equal(ukCatalog.find(p=>p.nameEn==='Moco Museum London').lat,51.5135002);
+ assert.notEqual(ukCatalog.find(p=>p.nameEn==='Royal Pavilion').id,ukCatalog.find(p=>p.nameEn==='Royal Pavilion Garden').id);
+ const {seedPlaces}=await import('../js/add-place-data.js');assert.equal(seedPlaces({name:'Ноттингем',country:'Великобритания'}).length,6);assert.equal(seedPlaces({name:'Белфаст',country:'Великобритания'}).length,6);
 });
