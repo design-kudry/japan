@@ -1,3 +1,4 @@
+import {placeWithDetails} from './place-identity.js';
 import {PlacePhotoCarousel} from './place-photo-carousel.jsx';
 import {PlacePhoto} from './place-loading.jsx';
 import {useState,useEffect,useRef} from 'react';
@@ -42,7 +43,7 @@ export function RoutePlaceSearch({initialQuery='',places,context,onChoose,onClos
 export function RoutePlacePreview({place:original,saved,onSave,onOpen,onSchedule,onRemove,current,assigned}) {
  const [extra,setExtra]=useState({}),[enriching,setEnriching]=useState(true),[error,setError]=useState('');
  useEffect(()=>{setExtra({});setEnriching(true);const request=new AbortController();enrichPlaces([original],request.signal,patches=>setExtra(patches[placeId(original)]||{})).catch(()=>{}).finally(()=>{if(!request.signal.aborted)setEnriching(false);});return()=>request.abort();},[placeId(original)]);
- const place={...original,...extra,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price};
+ const place=placeWithDetails(original,extra);
  return <article className="constructor-place-preview" aria-label="Выбранное место">
   <PlacePhotoCarousel place={place} pending={enriching} onOpen={()=>onOpen(place)}/>
   <button className="constructor-preview-open" onClick={()=>onOpen(place)}>

@@ -1,3 +1,4 @@
+import {samePlaceLocation} from './place-identity.js';
 import {fetchPlaceJson,wikiPlaces} from './wiki-places.js';
 import {curatedCatalog} from './place-catalog.js';
 import {hasCyrillic,polishDescription} from './russian.js';
@@ -13,7 +14,7 @@ export function libraryPlace(p){
  const norm=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
  const author=authoredById.get(p.id)||authoredByWiki.get(wikiId(p))||curatedCatalog.find(c=>[c.name,c.nameEn].some(n=>n&&norm(n)===norm(p.name))&&Math.hypot(c.lat-p.lat,c.lng-p.lng)<.003);
  const shared=records.get(identity(p));
- const preferred=author||shared;
+ const preferred=[author,shared].find(candidate=>candidate&&samePlaceLocation(p,candidate));
  return preferred?{...p,...preferred,id:preferred.id||p.id,img:preferred.img||p.img}:p;
 }
 export function registerPlaces(items){

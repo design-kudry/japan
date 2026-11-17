@@ -19,7 +19,7 @@ const englishName=p=>{
  return p.nameEn||(/^[^\u0400-\u04FF]+$/.test(String(p.name||''))?p.name:idName)||p.name||'';
 };
 const nameCandidates=p=>[p.nameEn,englishName(p),p.name,String(p.id||'').includes('|')?String(p.id).split('|')[0]:''].map(norm).filter(Boolean);
-const nameHit=(wants,titles)=>wants.length&&titles.length&&wants.some(want=>titles.some(n=>n.includes(want)||want.includes(n)||n.split(' ').some(w=>w.length>3&&want.includes(w))));
+const nameHit=(wants,titles)=>wants.length&&titles.length&&wants.some(want=>titles.some(n=>n.includes(want)||want.includes(n)));
 
 async function json(url,signal,init={}){
  const request=new AbortController(),abort=()=>request.abort();
@@ -70,7 +70,7 @@ async function wikiPhotoFill(p,patch,signal){
   try{
    const d=await json(api(lang+'.wikipedia.org',{action:'query',list:'geosearch',gscoord:p.lat+'|'+p.lng,gsradius:'1000',gslimit:'8'}),signal);
    const hits=d.query?.geosearch||[];if(!hits.length)continue;
-   const hit=hits.find(h=>nameHit(wants,[norm(h.title)]))||hits[0];
+   const hit=hits.find(h=>nameHit(wants,[norm(h.title)]));if(!hit)continue;
    const page=await json(api(lang+'.wikipedia.org',{
     action:'query',pageids:String(hit.pageid),
     prop:'pageimages|extracts|info|pageprops',inprop:'url',
@@ -98,7 +98,7 @@ async function wikidataPhotoFill(p,patch,signal){
  const query=englishName(p)||p.name;if(!query||query.length<2)return;
  try{
   const search=await json(api('www.wikidata.org',{action:'wbsearchentities',search:query,language:'en',type:'item',limit:'5'}),signal);
-  const hit=(search.search||[]).find(s=>nameHit(nameCandidates(p),[norm(s.label)]))||search.search?.[0];
+  const hit=(search.search||[]).find(s=>nameHit(nameCandidates(p),[norm(s.label)]));
   if(!hit?.id)return;
   patch.wikidata||=hit.id;
   const ent=(await json(api('www.wikidata.org',{action:'wbgetentities',ids:hit.id,props:'claims|labels|descriptions|sitelinks',languages:'ru|en',sitefilter:'ruwiki|enwiki'}),signal)).entities?.[hit.id];

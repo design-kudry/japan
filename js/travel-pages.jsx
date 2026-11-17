@@ -1,3 +1,4 @@
+import {placeWithDetails} from './place-identity.js';
 import PhotoViewer from './photo-viewer.jsx';
 import {PlacePhotoCarousel} from './place-photo-carousel.jsx';
 import {photoList} from './photo-gallery.js';
@@ -61,7 +62,7 @@ export function PlaceDetail({place:original,days,saved,onSave,onSchedule,onRemov
  const [extra,setExtra]=useState({}),[enriching,setEnriching]=useState(true);
  // Always enrich — hours/price/photo may still be missing even when desc/img exist.
  useEffect(()=>{setEnriching(true);const request=new AbortController();enrichPlaces([original],request.signal,patches=>setExtra(patches[placeId(original)]||{})).catch(()=>{}).finally(()=>{if(!request.signal.aborted)setEnriching(false);});return()=>request.abort();},[placeId(original)]);
- const place={...original,...extra,name:original.name,shortDesc:original.shortDesc,img:original.img||extra.img,desc:original.desc||extra.desc,hours:original.hours||extra.hours,price:original.price||extra.price,duration:original.duration||extra.duration,category:original.category||extra.category};
+ const place=placeWithDetails(original,extra);
  const metadata=placeMeta(place);
  const [gallery,setGallery]=useState([]),[photoOpen,setPhotoOpen]=useState(false),[photoIndex,setPhotoIndex]=useState(0);
  const photos=photoList(place,gallery);

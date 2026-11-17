@@ -1,3 +1,5 @@
+import {dayRouteFeatures,routePreview} from './route-map-data.js';
+import {placeWithDetails} from './place-identity.js';
 import {renderMapPlaceMarker} from './map-place-marker.js';
 import TransportFlow,{BookingCards} from './transport.jsx';
 import {segmentDay} from './transport-data.js';
@@ -24,7 +26,7 @@ import {createPortal, flushSync} from 'react-dom';
 import {Button, Card, DropdownMenu, Icon, Modal, Text, TextInput, SegmentedRadioGroup, ThemeProvider, configure} from '@gravity-ui/uikit';
 import {RangeDatePicker} from '@gravity-ui/date-components';
 import {settings} from '@gravity-ui/date-utils';
-import {ArrowDown, ArrowShapeTurnUpRight, ArrowUp, ChevronsExpandUpRight, ChevronDown, ChevronLeft, ChevronUp, Car, Grip, Heart, House, Magnifier, MapPin, PaperPlane, Pencil, PlanetEarth, Plus, SquareDashedText, Tag, TrashBin, Xmark} from '@gravity-ui/icons';
+import {ArrowDown, ArrowShapeTurnUpRight, ArrowUp, ChevronsExpandUpRight, ChevronDown, ChevronLeft, ChevronUp, Car, Grip, Heart, House, Magnifier, MapPin, PaperPlane, Pencil, PlanetEarth, Plus, FileText, Gear, Tag, TrashBin, Xmark} from '@gravity-ui/icons';
 import '@gravity-ui/uikit/styles/styles.css';
 import '../css/gravity-trips.css';
 import TripExpenses from './trip-expenses.jsx';
@@ -284,24 +286,19 @@ function NewTrip({local, remote, save}) {
 
 function RouteMap({places, stays, fullMap, onExpand, onPlace}) {
   const points = places.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng));
-  if (!points.length) return null;
   const pins = [...points,...stays.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng))];
-  const lat = pins.map(place => place.lat), lng = pins.map(place => place.lng);
-  const minLat = Math.min(...lat), maxLat = Math.max(...lat), minLng = Math.min(...lng), maxLng = Math.max(...lng);
-  const centerLat = (minLat + maxLat) / 2, centerLng = (minLng + maxLng) / 2;
-  const longitudeFactor = Math.cos(centerLat * Math.PI / 180);
-  const scale = Math.min(80 / (maxLat - minLat), 208 / ((maxLng - minLng) * longitudeFactor));
-  const coords = pins.map(place => [
-    Number.isFinite(scale) ? (place.lng - centerLng) * longitudeFactor * scale : 0,
-    Number.isFinite(scale) ? (centerLat - place.lat) * scale : 0,
-  ]);
+  const target=useRef(null),[size,setSize]=useState({width:320,height:181});
+  useEffect(()=>{if(!target.current)return;const observer=new ResizeObserver(([entry])=>setSize({width:entry.contentRect.width,height:entry.contentRect.height}));observer.observe(target.current);return()=>observer.disconnect();},[!!points.length]);
+  const {tiles,positions:coords}=routePreview(pins,size.width,size.height);
+  if (!points.length) return null;
   const point = place => place.lat+','+place.lng;
   const params = new URLSearchParams({api:'1',origin:point(points[0]),destination:point(points.at(-1)),travelmode:'walking'});
   if (points.length > 2) params.set('waypoints',points.slice(1,-1).slice(0,8).map(point).join('|'));
   const maps = points.length === 1 ? 'https://www.google.com/maps/search/?api=1&query='+point(points[0]) : 'https://www.google.com/maps/dir/?'+params;
   return <Card view="outlined" className="gravity-map">
-    <div className="gravity-map-points" aria-label="Схема маршрута">
-      <svg viewBox="-110 -48 220 96" aria-hidden="true">
+    <div ref={target} className="gravity-map-points" aria-label="Карта маршрута">
+      {tiles.map(tile=><img className="gravity-map-tile" key={tile.z+'/'+tile.x+'/'+tile.y} src={'https://tile.openstreetmap.org/'+tile.z+'/'+tile.x+'/'+tile.y+'.png'} alt="" loading="lazy" style={{left:tile.left,top:tile.top}}/>)}
+      <svg viewBox={'0 0 '+size.width+' '+size.height} aria-hidden="true">
         <polyline points={coords.slice(0,points.length).map(pair => pair.join(',')).join(' ')} fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
       </svg>
       {pins.map((place,index) => <button type="button" onClick={() => onPlace?.(place)} key={index} className={'gravity-map-marker'+(index >= points.length ? ' gravity-map-stay' : '')} style={{left:coords[index][0],top:coords[index][1]}} aria-label={place.name}>
@@ -310,6 +307,7 @@ function RouteMap({places, stays, fullMap, onExpand, onPlace}) {
       </button>)}
     </div>
     {(fullMap || onExpand) && <div className="gravity-map-expand"><IconButton icon={ChevronsExpandUpRight} label="Развернуть карту" href={onExpand ? undefined : fullMap} onClick={onExpand} size="s" view="outlined" /></div>}
+    <span className="gravity-map-attribution"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></span>
     <Button className="gravity-map-link" href={maps} target="_blank" rel="noopener" size="s" view="outlined"><Icon data={MapPin} size={12} />Google Maps</Button>
   </Card>;
 }
@@ -325,14 +323,15 @@ function RouteCard({title, detail, thumbnail, children, transfer, onOpen}) {
 }
 
 function DayCard({item, transfer = false, onOpen}) {
-  const [extra,setExtra]=useState({});
+  const [enrichment,setDetails]=useState(null);
+  const extra=enrichment?.id===placeId(item)?enrichment.patch:{};
   useEffect(()=>{
     if(transfer||(item.price&&item.hours)||!(item.id?.startsWith?.('osm:')||item.wiki||item.wikidata||(Number.isFinite(item.lat)&&Number.isFinite(item.lng))))return;
     const request=new AbortController();
-    enrichPlaces([item],request.signal,patches=>setExtra(patches[placeId(item)]||{})).catch(()=>{});
+    enrichPlaces([item],request.signal,patches=>{if(!request.signal.aborted)setDetails({id:placeId(item),patch:patches[placeId(item)]||{}});}).catch(()=>{});
     return()=>request.abort();
   },[transfer,item.id,item.wiki,item.wikidata,item.price,item.hours]);
-  const place=transfer?item:{...item,...extra,img:item.img||extra.img,price:item.price||extra.price,hours:item.hours||extra.hours};
+  const place=transfer?item:placeWithDetails(item,extra);
   const arrival = transfer && item.route.startsWith('Прилёт · ');
   const time = arrival && item.detail?.match(/^\d{1,2}:\d{2}/)?.[0];
   const title = arrival ? 'Прилёт' : transfer ? item.route : place.name;
@@ -371,7 +370,7 @@ function DayStrip({days,current,onDay}) {
   </nav>;
 }
 
-function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onViewport,onMapClick,initialPlaces,routePlaces=places,savedPlaces=[]}) {
+function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onViewport,onMapClick,initialPlaces,routePlaces=places,savedPlaces=[],routeDays=[]}) {
   const target=useRef(null),mapRef=useRef(null),callbacks=useRef({}),markers=useRef(new Map()),routeLine=useRef(null),declutter=useRef(()=>{}),automatic=useRef(false);
   callbacks.current={onSelect,onViewport,onMapClick};
   const [cityCenter,setCityCenter]=useState(null),[ready,setReady]=useState(0),[failed,setFailed]=useState(false);
@@ -439,25 +438,27 @@ function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onView
       }
       item.place=p;item.el.setAttribute('aria-label',p.name);item.el.dataset.selected=String(!!focusPlace&&id===placeId(focusPlace));
       const routeIndex=routePlaces.findIndex(r=>placeId(r)===id);
-      const onRoute=routeIndex>=0,numbered=drawRoute&&onRoute;item.el.classList.toggle('constructor-photo-pin-area',!onRoute);
+      const onRoute=routeIndex>=0||routeDays.some(d=>(d.places||[]).some(r=>placeId(r)===id)),numbered=drawRoute&&routeIndex>=0;item.el.classList.toggle('constructor-photo-pin-area',!onRoute);
       const favorite=savedPlaces.some(saved=>placeId(saved)===id);
       if(item.img!==p.img||item.index!==routeIndex||item.numbered!==numbered||item.name!==p.name||item.saved!==favorite){item.img=p.img;item.index=routeIndex;item.numbered=numbered;item.name=p.name;item.saved=favorite;
         renderMapPlaceMarker(item.el,p,{saved:favorite,number:numbered?routeIndex+1:null});
       }
     });
     routeLine.current?.remove();routeLine.current=null;
-    if(m.getCanvas&&m.getSource('route')&&(!drawRoute||routePlaces.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng)).length<2))m.getSource('route').setData({type:'FeatureCollection',features:[]});
-    const routePoints=routePlaces.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng));
-    if(drawRoute&&routePoints.length>1){const coords=routePoints.map(p=>[p.lng,p.lat]);if(m.getCanvas){const data={type:'Feature',geometry:{type:'LineString',coordinates:coords}};if(m.getSource('route'))m.getSource('route').setData(data);else{m.addSource('route',{type:'geojson',data});m.addLayer({id:'route-line',type:'line',source:'route',paint:{'line-color':'#333','line-width':2.5},layout:{'line-cap':'round','line-join':'round'}});}}else routeLine.current=window.L.polyline(routePoints.map(p=>[p.lat,p.lng]),{color:'#333',weight:2}).addTo(m);}
+    const data=drawRoute?dayRouteFeatures(routeDays.length?routeDays:[{date:day.date,places:routePlaces}],day.date):{type:'FeatureCollection',features:[]};
+    if(m.getCanvas){
+      if(m.getSource('route'))m.getSource('route').setData(data);
+      else{m.addSource('route',{type:'geojson',data});m.addLayer({id:'route-line',type:'line',source:'route',paint:{'line-color':['get','color'],'line-width':['get','width'],'line-opacity':['get','opacity']},layout:{'line-cap':'round','line-join':'round'}});}
+    }else routeLine.current=window.L.featureGroup(data.features.map(feature=>window.L.polyline(feature.geometry.coordinates.map(([lng,lat])=>[lat,lng]),{color:feature.properties.color,weight:feature.properties.width,opacity:feature.properties.opacity}))).addTo(m);
     declutter.current();
-  },[places,ready,drawRoute,routePlaces,focusPlace,savedPlaces]);
+  },[places,ready,drawRoute,routePlaces,focusPlace,savedPlaces,routeDays,day.date]);
   useEffect(()=>{const m=mapRef.current;if(!m)return;markers.current.forEach(item=>{item.el.dataset.selected=String(!!focusPlace&&placeId(item.place)===placeId(focusPlace));});declutter.current();if(!Number.isFinite(focusPlace?.lat))return;
     automatic.current=!(focusPlace.isCity||focusPlace.searchTarget);const zoom=focusPlace.isCity?12:Math.max(m.getZoom(),14);if(m.getCanvas)m.flyTo({center:[focusPlace.lng,focusPlace.lat],zoom,duration:450});else m.flyTo([focusPlace.lat,focusPlace.lng],zoom,{duration:.45});
   },[focusPlace,ready]);
   return <div className="gravity-editor-map"><div ref={target} aria-label="Карта мест"/>{failed&&<p role="status">Не удалось загрузить карту</p>}</div>;
 }
 
-function RouteExplorer({day,places,loadMap,onPlace,savedPlaces,toggleSaved,children,current,initialMode='full',initialPlace=null,footer,controller,onModeChange,onQuickSchedule,onRemove,assignedDates,blocked}) {
+function RouteExplorer({day,places,routeDays=[],loadMap,onPlace,savedPlaces,toggleSaved,children,current,initialMode='full',initialPlace=null,footer,controller,onModeChange,onQuickSchedule,onRemove,assignedDates,blocked}) {
   const stage=useRef(null), sheet=useRef(null), scroll=useRef(null), drag=useRef(null), carousel=useRef(null), scrollTimer=useRef(null), positioning=useRef(false);
   const [height,setHeight]=useState(600),[mode,setMode]=useState(initialMode),[selected,setSelected]=useState(initialPlace),[error,setError]=useState('');
   const heightRef=useRef(height), yRef=useRef(null), modeRef=useRef(mode);
@@ -526,10 +527,10 @@ function RouteExplorer({day,places,loadMap,onPlace,savedPlaces,toggleSaved,child
     const coast=performance.now()-d.time<80?d.speed*90:0;
     settle(yRef.current+coast,true);
   }
-  const mapPlaces=mergePlaces([...(selected?[selected]:[]),...places,...savedPlaces,...libraryPlaces().filter(p=>bounds&&inBounds(p,bounds)),...nearby]);
+  const mapPlaces=mergePlaces([...(selected?[selected]:[]),...places,...routeDays.flatMap(d=>d.places||[]),...savedPlaces,...libraryPlaces().filter(p=>bounds&&inBounds(p,bounds)),...nearby]);
   const sheetScrollable=mode!=='peek'&&mode!=='browse';
   return <div className="route-explorer" ref={stage} data-sheet={mode} inert={blocked?'':undefined} aria-hidden={blocked||undefined}>
-    <EditorMap day={day} savedPlaces={savedPlaces} places={mapPlaces} initialPlaces={places} loadMap={loadMap} drawRoute routePlaces={places} focusPlace={focus} onViewport={setBounds} onMapClick={()=>{setSelected(null);setCards([]);setFocus(null);setError('');snap('half');}} onSelect={place=>{const fromRoute=places.some(p=>placeId(p)===placeId(place));openCards(place,fromRoute?places:mergePlaces([place,...nearby.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng))]));snap('browse');}}/>
+    <EditorMap day={day} routeDays={routeDays} savedPlaces={savedPlaces} places={mapPlaces} initialPlaces={places} loadMap={loadMap} drawRoute routePlaces={places} focusPlace={focus} onViewport={setBounds} onMapClick={()=>{setSelected(null);setCards([]);setFocus(null);setError('');snap('half');}} onSelect={place=>{const fromRoute=places.some(p=>placeId(p)===placeId(place));openCards(place,fromRoute?places:mergePlaces([place,...nearby.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng))]));snap('browse');}}/>
     {selected && mode==='browse' && <div ref={carousel} className="constructor-preview-carousel" onScroll={e=>{if(positioning.current)return;const node=e.currentTarget;clearTimeout(scrollTimer.current);scrollTimer.current=setTimeout(()=>{const i=Math.round(node.scrollLeft/(node.children[1]?.offsetLeft-node.children[0]?.offsetLeft||node.children[0]?.clientWidth+6||1));if(cards[i]&&placeId(cards[i])!==placeId(selected)){setSelected(cards[i]);setFocus(cards[i]);}},100);}}>{cards.map(place=><RoutePlacePreview key={placeId(place)} place={place} current={day} assigned={assignedDates?.has(placeId(place))} saved={savedPlaces.some(p=>placeId(p)===placeId(place))} onSave={toggleSaved} onOpen={onPlace} onSchedule={onQuickSchedule} onRemove={onRemove}/>)}</div>}
     <section ref={sheet} className="route-drag-sheet" aria-label="Расписание маршрута" onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerCancel={()=>{drag.current=null;if(modeRef.current!=='browse')settle(yRef.current,false);}}>
       <button className="route-sheet-handle" aria-label={mode==='full'?'Показать карту':mode==='peek'?'Показать маршрут':'Развернуть маршрут'} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();snap(handleCycle());}}}><span/></button>
@@ -606,7 +607,7 @@ function RouteEditor({bookings,onTransport,tripCities,days,current,editPlaces,lo
           <PlaceSearchTrigger value={query} onClick={search}/>
         </div>
       </header>
-      <RouteExplorer blocked={adding} controller={explorer} onModeChange={setExplorerMode} assignedDates={assignedDates} onQuickSchedule={place=>schedule(date,place,'half')} onRemove={remove} day={day} places={places} current={date} loadMap={loadMap} onPlace={openDetail} savedPlaces={savedPlaces} toggleSaved={toggleSaved} initialMode={initialPlace?'browse':initialMap?'half':'full'} initialPlace={initialPlace} footer={<footer className="constructor-footer"><span aria-label={formatRouteDuration(routeDurationMinutes(places))?'Оценка времени маршрута':'Время маршрута не рассчитано'}><img src="image/constructor/time.svg" alt=""/>{formatRouteDuration(routeDurationMinutes(places))||'—'}</span><Button view="flat" size="s" disabled={places.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng)).length<3} onClick={optimize}>Оптимизировать</Button></footer>}>
+      <RouteExplorer routeDays={effectiveDays} blocked={adding} controller={explorer} onModeChange={setExplorerMode} assignedDates={assignedDates} onQuickSchedule={place=>schedule(date,place,'half')} onRemove={remove} day={day} places={places} current={date} loadMap={loadMap} onPlace={openDetail} savedPlaces={savedPlaces} toggleSaved={toggleSaved} initialMode={initialPlace?'browse':initialMap?'half':'full'} initialPlace={initialPlace} footer={<footer className="constructor-footer"><span aria-label={formatRouteDuration(routeDurationMinutes(places))?'Оценка времени маршрута':'Время маршрута не рассчитано'}><img src="image/constructor/time.svg" alt=""/>{formatRouteDuration(routeDurationMinutes(places))||'—'}</span><Button view="flat" size="s" disabled={places.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng)).length<3} onClick={optimize}>Оптимизировать</Button></footer>}>
       <div className="gravity-editor-items">
         <DayStrip days={days} current={date} onDay={next => {setDate(next);setAdding(false);setQuery('');setSearchLabel('');setError('');}} />
         {places.map((place,index) => <div className="gravity-editor-row" key={placeId(place)} data-sort-index={index}>
@@ -696,16 +697,16 @@ function Itinerary({bookings=[],saveBooking,deleteBooking,title, date, trips, cu
         ['route','Маршрут',MapPin,routeHref],
         ['places','Места',PlanetEarth,placesHref],
         ['expenses','Расходы',Tag,expensesHref],
-        ['notes','Заметки',SquareDashedText,routeHref+'/notes'],
+        ['notes','Заметки',FileText,routeHref+'/notes'],
       ].map(([value,label,icon,href]) => <Button key={value} className="gravity-bottom-button"
         view={tab === value ? 'normal' : 'flat'} href={href} disabled={!href}
-        aria-current={tab === value ? 'page' : undefined}><span className="gravity-bottom-label"><Icon data={icon} size={value === 'notes' ? 20 : 24} /><span>{label}</span></span></Button>)}
+        aria-current={tab === value ? 'page' : undefined}><span className="gravity-bottom-label"><Icon data={icon} size={20} /><span>{label}</span></span></Button>)}
       <DropdownMenu items={[
         ...(citiesHref ? [{text:'Города и даты',action:() => {location.hash = citiesHref;}}] : []),
         {text:'Добавить перемещение',action:() => setTransport({day:activeDate})},
         {text:'Удалить поездку',theme:'danger',action:()=>{setDeleteError('');setDeleteOpen(true);}},
       ]} renderSwitcher={props => <Button {...props} className="gravity-bottom-button" view="flat">
-        <span className="gravity-bottom-label"><Icon data={Tag} size={28} /><span>Настройки</span></span>
+        <span className="gravity-bottom-label"><Icon data={Gear} size={20} /><span>Настройки</span></span>
       </Button>} />
     </nav>,document.body)}
     {transport&&<TransportFlow day={transport.day} days={days} tripId={routeHref} booking={transport.booking} onSave={saveBooking} onDelete={deleteBooking} onClose={()=>setTransport(null)}/>}
@@ -723,7 +724,7 @@ function Itinerary({bookings=[],saveBooking,deleteBooking,title, date, trips, cu
         <RouteMap places={day.places} stays={day.stays} onExpand={() => setRouteMapDay(day)} onPlace={place=>setRouteMapDay({...day,selectedPlace:place})} />
         {bookings.filter(b=>b.segments.some(s=>segmentDay(s)===day.date)).map(b=><BookingCards key={b.id} booking={b} segments={b.segments.filter(s=>segmentDay(s)===day.date)} onOpen={booking=>setTransport({booking,day:day.date})}/>)}
         {day.transfers.map((item,i) => <DayCard key={i} item={item} transfer />)}
-        {day.places.map((item,i) => <DayCard key={i} item={item} onOpen={()=>setDetail(item)} />)}
+        {day.places.map(item => <DayCard key={placeId(item)} item={item} onOpen={setDetail} />)}
         {!day.places.length && !day.transfers.length && !bookings.some(b=>b.segments.some(s=>segmentDay(s)===day.date)) && <p className="trip-empty-day">Вы пока ничего не добавили</p>}
       </div>}
     </section>)}
