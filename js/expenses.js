@@ -32,3 +32,27 @@ const EXPENSES=[
     {name:'Камакура (все храмы)',jpy:'¥2,000',rub:'912 ₽'},
   ],total:{jpy:'~¥32,400',rub:'~16 848 ₽'}},
 ];
+
+function initExpensesPage() {
+  renderSiteNav({ page: 'expenses' });
+  const main = document.getElementById('expenses-main');
+  if (!main) return;
+  main.innerHTML = `
+  <div class="day-header">
+    <div class="day-index">17–30 сентября</div>
+    <div class="day-title"><span class="day-city">Расходы </span><span class="day-city-jp">費用まとめ</span></div>
+  </div>
+  ${EXPENSES.map(s => `
+    <div class="exp-section">
+      <h3>${s.cat}</h3>
+      ${s.note ? `<p class="exp-note">${s.note}</p>` : ''}
+      ${s.items.map(it => `<div class="exp-row"><span class="exp-label">${it.name}</span><span class="exp-val">${formatMoneyPair(it.jpy, it.rub)}</span></div>`).join('')}
+      <div class="exp-row"><span class="exp-label" style="font-style:normal;font-weight:600;color:var(--text-1)">Итого</span><span class="exp-val">${formatMoneyPair(s.total.jpy, s.total.rub)}</span></div>
+    </div>`).join('')}
+  <div class="exp-total">
+    <div class="t-label">без авиабилетов и отелей</div>
+    <div class="t-sum">Итого: ~¥65 000–72 000 · ~31 700–35 000 ₽</div>
+  </div>`;
+}
+
+document.addEventListener('DOMContentLoaded', initExpensesPage);
