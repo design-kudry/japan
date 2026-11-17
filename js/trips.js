@@ -129,7 +129,7 @@
         places:isJapan?uniqueJapan(dayPlaces(trip,date,index)):dayPlaces(trip,date,index),
         transfers:isJapan?[]:[...(trip?.transfers || []).filter(item => item.date === date)],
         stays:isJapan ? STAYS[DAY_REGION[index]] || [] : [],
-        fullMap:isJapan ? 'japan.html#day/'+date.slice(8) : '',
+        fullMap:'#japan',
       };
     });
     const tab = inPlaces() ? 'places' : route().endsWith('/expenses') ? 'expenses' : route().endsWith('/notes') ? 'notes' : 'route';
@@ -197,7 +197,7 @@
     if (page === 'places') {location.replace('#japan/places');return;}
     if (page === 'expenses') {location.replace('#japan/expenses');return;}
     if (page.startsWith('day/') || page.startsWith('places')) {
-      location.replace('japan.html'+location.hash);
+      location.replace(page.startsWith('places')?'#japan/places':'#japan');
       return;
     }
     if(saved.japanDeleted && page.startsWith('japan')) {location.replace(activeTrip());return;}

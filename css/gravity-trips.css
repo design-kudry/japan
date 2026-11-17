@@ -985,11 +985,11 @@ body:has(.add-catalog) .gravity-editor-header .place-search-rest,[inert] .place-
 .constructor-photo-pin .map-place-favorite>img{display:block;inline-size:10px;block-size:10px;width:10px;height:10px;border-radius:0;object-fit:contain}
 .map-place-number{background:#111;width:17px;height:17px;font:10px/13px var(--travel-font);border:2px solid white;right:-2px;bottom:-2px}
 
-/* Geographic preview: tiles, connecting line and pins use the same pixel origin. */
-.gravity-map-points {inset:0;width:100%;height:100%;background:#e9ece7;color:#48545c;isolation:isolate}
-.gravity-map-points > .gravity-map-tile {position:absolute;width:256px;height:256px;max-width:none;pointer-events:none;z-index:-1}
-.gravity-map-points > svg {inset:0;width:100%;height:100%;position:absolute;pointer-events:none}
-.gravity-map-points .gravity-map-marker {z-index:1}
-.gravity-map-expand,.gravity-map-link {z-index:2}
-.gravity-map-attribution {position:absolute;right:3px;bottom:1px;z-index:2;font-size:8px;line-height:10px;background:#ffffffcf;color:#555}
+/* Every itinerary preview uses the same map renderer, style and pins as the editor. */
+.gravity-mini-map {position:absolute;inset:0;background:var(--g-color-base-generic)}
+.gravity-mini-map .gravity-editor-map {position:absolute;inset:0;height:100%;min-height:0;max-height:none;margin:0}
+.gravity-mini-map .map-place-label {display:none}
+.gravity-map-expand,.gravity-map-link {z-index:1000}
+.gravity-map-attribution {position:absolute;right:3px;bottom:1px;z-index:500;font-size:8px;line-height:10px;background:#ffffffcf;color:#555}
 .gravity-map-attribution a {color:inherit}
+.route-explorer .gravity-map-attribution {bottom:76px}

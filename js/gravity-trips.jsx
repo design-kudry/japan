@@ -1,4 +1,4 @@
-import {dayRouteFeatures,routePreview} from './route-map-data.js';
+import {dayRouteFeatures} from './route-map-data.js';
 import {placeWithDetails} from './place-identity.js';
 import {renderMapPlaceMarker} from './map-place-marker.js';
 import TransportFlow,{BookingCards} from './transport.jsx';
@@ -284,30 +284,21 @@ function NewTrip({local, remote, save}) {
   </form>;
 }
 
-function RouteMap({places, stays, fullMap, onExpand, onPlace}) {
-  const points = places.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng));
-  const pins = [...points,...stays.filter(place => Number.isFinite(place.lat) && Number.isFinite(place.lng))];
-  const target=useRef(null),[size,setSize]=useState({width:320,height:181});
-  useEffect(()=>{if(!target.current)return;const observer=new ResizeObserver(([entry])=>setSize({width:entry.contentRect.width,height:entry.contentRect.height}));observer.observe(target.current);return()=>observer.disconnect();},[!!points.length]);
-  const {tiles,positions:coords}=routePreview(pins,size.width,size.height);
-  if (!points.length) return null;
-  const point = place => place.lat+','+place.lng;
-  const params = new URLSearchParams({api:'1',origin:point(points[0]),destination:point(points.at(-1)),travelmode:'walking'});
-  if (points.length > 2) params.set('waypoints',points.slice(1,-1).slice(0,8).map(point).join('|'));
-  const maps = points.length === 1 ? 'https://www.google.com/maps/search/?api=1&query='+point(points[0]) : 'https://www.google.com/maps/dir/?'+params;
+function RouteMap({day,dayIndex,loadMap,onExpand,onPlace}) {
+  const target=useRef(null),[visible,setVisible]=useState(false);
+  const points=day.places.filter(place=>Number.isFinite(place.lat)&&Number.isFinite(place.lng));
+  const pins=[...points,...day.stays.filter(place=>Number.isFinite(place.lat)&&Number.isFinite(place.lng))];
+  useEffect(()=>{if(!target.current)return;const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'120px'});observer.observe(target.current);return()=>observer.disconnect();},[!!points.length]);
+  if(!points.length)return null;
+  const point=place=>place.lat+','+place.lng;
+  const params=new URLSearchParams({api:'1',origin:point(points[0]),destination:point(points.at(-1)),travelmode:'walking'});
+  if(points.length>2)params.set('waypoints',points.slice(1,-1).slice(0,8).map(point).join('|'));
+  const maps=points.length===1?'https://www.google.com/maps/search/?api=1&query='+point(points[0]):'https://www.google.com/maps/dir/?'+params;
   return <Card view="outlined" className="gravity-map">
-    <div ref={target} className="gravity-map-points" aria-label="Карта маршрута">
-      {tiles.map(tile=><img className="gravity-map-tile" key={tile.z+'/'+tile.x+'/'+tile.y} src={'https://tile.openstreetmap.org/'+tile.z+'/'+tile.x+'/'+tile.y+'.png'} alt="" loading="lazy" style={{left:tile.left,top:tile.top}}/>)}
-      <svg viewBox={'0 0 '+size.width+' '+size.height} aria-hidden="true">
-        <polyline points={coords.slice(0,points.length).map(pair => pair.join(',')).join(' ')} fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      </svg>
-      {pins.map((place,index) => <button type="button" onClick={() => onPlace?.(place)} key={index} className={'gravity-map-marker'+(index >= points.length ? ' gravity-map-stay' : '')} style={{left:coords[index][0],top:coords[index][1]}} aria-label={place.name}>
-        {place.img ? <img src={place.img} alt="" loading="lazy" /> : <Icon data={index >= points.length ? House : MapPin} size={16} />}
-        {index < points.length && <span className="gravity-map-number" aria-hidden="true">{index + 1}</span>}
-      </button>)}
+    <div ref={target} className="gravity-mini-map" aria-label="Карта маршрута">
+      {visible&&<EditorMap compact day={day} places={pins} routePlaces={points} routeDays={[{...day,colorIndex:dayIndex}]} initialPlaces={points} loadMap={loadMap} onSelect={onPlace}/>}
     </div>
-    {(fullMap || onExpand) && <div className="gravity-map-expand"><IconButton icon={ChevronsExpandUpRight} label="Развернуть карту" href={onExpand ? undefined : fullMap} onClick={onExpand} size="s" view="outlined" /></div>}
-    <span className="gravity-map-attribution"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></span>
+    <div className="gravity-map-expand"><IconButton icon={ChevronsExpandUpRight} label="Развернуть карту" onClick={onExpand} size="s" view="outlined" /></div>
     <Button className="gravity-map-link" href={maps} target="_blank" rel="noopener" size="s" view="outlined"><Icon data={MapPin} size={12} />Google Maps</Button>
   </Card>;
 }
@@ -370,10 +361,11 @@ function DayStrip({days,current,onDay}) {
   </nav>;
 }
 
-function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onViewport,onMapClick,initialPlaces,routePlaces=places,savedPlaces=[],routeDays=[]}) {
+function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onViewport,onMapClick,initialPlaces,routePlaces=places,savedPlaces=[],routeDays=[],compact=false}) {
   const target=useRef(null),mapRef=useRef(null),callbacks=useRef({}),markers=useRef(new Map()),routeLine=useRef(null),declutter=useRef(()=>{}),automatic=useRef(false);
   callbacks.current={onSelect,onViewport,onMapClick};
   const [cityCenter,setCityCenter]=useState(null),[ready,setReady]=useState(0),[failed,setFailed]=useState(false);
+  const mapPadding=compact?{top:28,bottom:48,left:36,right:36}:64;
   const startPoints=(initialPlaces||places).filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng));
   const startable=startPoints.length>0||!!cityCenter;
   const [started,setStarted]=useState(startable);
@@ -396,10 +388,10 @@ function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onView
       resize=new ResizeObserver(()=>{if(map.getCanvas)map.resize();else map.invalidateSize({pan:false});declutter.current();});resize.observe(target.current);
     };
     loadMapStyle().then(style=>{if(!active)return;
-      try{map=new maplibregl.Map({container:target.current,style,center:[center.lng,center.lat],zoom:13,attributionControl:false,fadeDuration:0,maxTileCacheSize:500});map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
-        if(initial.length>1){const bounds=new maplibregl.LngLatBounds([initial[0].lng,initial[0].lat],[initial[0].lng,initial[0].lat]);initial.forEach(p=>bounds.extend([p.lng,p.lat]));map.fitBounds(bounds,{padding:64,maxZoom:15,duration:0});}
+      try{map=new maplibregl.Map({container:target.current,style,center:[center.lng,center.lat],zoom:13,interactive:!compact,attributionControl:false,fadeDuration:0,maxTileCacheSize:500});if(!compact)map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+        if(initial.length>1){const bounds=new maplibregl.LngLatBounds([initial[0].lng,initial[0].lat],[initial[0].lng,initial[0].lat]);initial.forEach(p=>bounds.extend([p.lng,p.lat]));map.fitBounds(bounds,{padding:mapPadding,maxZoom:15,duration:0});}
         map.on('load',connect);
-      }catch{loadMap().then(()=>{if(!active)return;map=window.L.map(target.current,{scrollWheelZoom:true,zoomControl:false,attributionControl:false});window.L.control.zoom({position:'topright'}).addTo(map);window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);if(initial.length>1)map.fitBounds(initial.map(p=>[p.lat,p.lng]),{padding:[40,40],maxZoom:15,animate:false});else map.setView([center.lat,center.lng],13);connect();}).catch(()=>{if(active)setFailed(true);});}
+      }catch{loadMap().then(()=>{if(!active)return;map=window.L.map(target.current,{scrollWheelZoom:!compact,dragging:!compact,touchZoom:!compact,doubleClickZoom:!compact,boxZoom:!compact,keyboard:!compact,zoomControl:false,attributionControl:false});if(!compact)window.L.control.zoom({position:'topright'}).addTo(map);window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);if(initial.length>1)map.fitBounds(initial.map(p=>[p.lat,p.lng]),{paddingTopLeft:compact?[36,28]:[40,40],paddingBottomRight:compact?[36,48]:[40,40],maxZoom:15,animate:false});else map.setView([center.lat,center.lng],13);connect();}).catch(()=>{if(active)setFailed(true);});}
     });
     return()=>{active=false;resize?.disconnect();target.current?.removeEventListener('pointerdown',userMove);target.current?.removeEventListener('wheel',userMove);markers.current.forEach(m=>m.pin.remove());markers.current.clear();routeLine.current=null;map?.remove();mapRef.current=null;};
   },[loadMap,started]);
@@ -408,8 +400,8 @@ function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onView
   useEffect(()=>{const m=mapRef.current;if(!m)return;const {startPoints:pts,cityCenter:city}=latest.current;
     const animate=!firstView.current;firstView.current=false;
     if(pts.length>1){
-      if(m.getCanvas){const b=new maplibregl.LngLatBounds();pts.forEach(p=>b.extend([p.lng,p.lat]));m.fitBounds(b,{padding:64,maxZoom:15,duration:animate?500:0});}
-      else m.fitBounds(pts.map(p=>[p.lat,p.lng]),{padding:[40,40],maxZoom:15,animate});
+      if(m.getCanvas){const b=new maplibregl.LngLatBounds();pts.forEach(p=>b.extend([p.lng,p.lat]));m.fitBounds(b,{padding:mapPadding,maxZoom:15,duration:animate?500:0});}
+      else m.fitBounds(pts.map(p=>[p.lat,p.lng]),{paddingTopLeft:compact?[36,28]:[40,40],paddingBottomRight:compact?[36,48]:[40,40],maxZoom:15,animate});
     }else{const c=pts[0]||city;if(!c)return;
       if(m.getCanvas)m.easeTo({center:[c.lng,c.lat],zoom:13,duration:animate?500:0});else m.setView([c.lat,c.lng],13,{animate});
     }
@@ -455,7 +447,7 @@ function EditorMap({day,places,loadMap,onSelect,drawRoute=true,focusPlace,onView
   useEffect(()=>{const m=mapRef.current;if(!m)return;markers.current.forEach(item=>{item.el.dataset.selected=String(!!focusPlace&&placeId(item.place)===placeId(focusPlace));});declutter.current();if(!Number.isFinite(focusPlace?.lat))return;
     automatic.current=!(focusPlace.isCity||focusPlace.searchTarget);const zoom=focusPlace.isCity?12:Math.max(m.getZoom(),14);if(m.getCanvas)m.flyTo({center:[focusPlace.lng,focusPlace.lat],zoom,duration:450});else m.flyTo([focusPlace.lat,focusPlace.lng],zoom,{duration:.45});
   },[focusPlace,ready]);
-  return <div className="gravity-editor-map"><div ref={target} aria-label="Карта мест"/>{failed&&<p role="status">Не удалось загрузить карту</p>}</div>;
+  return <div className="gravity-editor-map"><div ref={target} aria-label="Карта мест"/>{failed&&<p role="status">Не удалось загрузить карту</p>}<span className="gravity-map-attribution"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a></span></div>;
 }
 
 function RouteExplorer({day,places,routeDays=[],loadMap,onPlace,savedPlaces,toggleSaved,children,current,initialMode='full',initialPlace=null,footer,controller,onModeChange,onQuickSchedule,onRemove,assignedDates,blocked}) {
@@ -589,7 +581,7 @@ function RouteEditor({bookings,onTransport,tripCities,days,current,editPlaces,lo
     update(places.map(place => positioned(place) ? ordered.shift() : place));
   }
   const context=places.find(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng))||day.fallbackCity;
-  const effectiveDays=days.map(d=>({...d,places:edits[d.date]??d.places}));
+  const effectiveDays=days.map((d,colorIndex)=>({...d,colorIndex,places:edits[d.date]??d.places}));
   const assignedDates=new Set(effectiveDays.flatMap(d=>d.places.map(placeId)));
   // Empty search shows «Найти место» until the user types.
   const searchTriggerLabel=(searchLabel||query).trim()||'Найти место';
@@ -716,12 +708,12 @@ function Itinerary({bookings=[],saveBooking,deleteBooking,title, date, trips, cu
     {routeMapDay&&<PlacesMap places={routeMapDay.places} routeMode initialSelected={routeMapDay.selectedPlace} initialPlaces={routeMapDay.places} fallbackCity={routeMapDay.fallbackCity} MapComponent={EditorMap} loadMap={loadMap} saved={savedPlaces} onSave={toggleSaved} onOpen={setDetail} onClose={()=>setRouteMapDay(null)}/>}
     {detail && <PlaceDetail place={detail} days={routeMapDay?[]:days} saved={savedPlaces.some(p=>placeId(p)===placeId(detail))} onSave={p=>toggleSaved(p||detail)} onSchedule={(date,p)=>schedulePlace(p||detail,date)} onRemove={removePlace} onClose={()=>setDetail(null)}/>}
     {tab === 'expenses' && <TripExpenses tripKey={routeHref} planned={expenses} />}
-    {tab === 'route' && days.map(day => <section className="gravity-day" key={day.date} data-date={day.date}>
+    {tab === 'route' && days.map((day,dayIndex) => <section className="gravity-day" key={day.date} data-date={day.date}>
       <h2><Button className="gravity-day-heading" view="normal" size="l" width="max" aria-expanded={!collapsed[day.date]} onClick={() => setCollapsed(previous => ({...previous,[day.date]:!previous[day.date]}))}>
         <span className="gravity-day-label">{day.label}{day.city ? ' — '+day.city : ''}</span><Icon data={collapsed[day.date] ? ChevronDown : ChevronUp} size={16} />
       </Button></h2>
       {!collapsed[day.date] && <div className="gravity-day-content">
-        <RouteMap places={day.places} stays={day.stays} onExpand={() => setRouteMapDay(day)} onPlace={place=>setRouteMapDay({...day,selectedPlace:place})} />
+        <RouteMap day={day} dayIndex={dayIndex} loadMap={loadMap} onExpand={() => setRouteMapDay(day)} onPlace={place=>setRouteMapDay({...day,selectedPlace:place})} />
         {bookings.filter(b=>b.segments.some(s=>segmentDay(s)===day.date)).map(b=><BookingCards key={b.id} booking={b} segments={b.segments.filter(s=>segmentDay(s)===day.date)} onOpen={booking=>setTransport({booking,day:day.date})}/>)}
         {day.transfers.map((item,i) => <DayCard key={i} item={item} transfer />)}
         {day.places.map(item => <DayCard key={placeId(item)} item={item} onOpen={setDetail} />)}
