@@ -339,7 +339,7 @@ html,body {height:100%;width:100%;overflow:hidden;overscroll-behavior:none;scrol
 }
 .gravity-share-dialog {display:grid;gap:12px;padding:16px}
 .gravity-day {gap:16px}
-.gravity-day + .gravity-day {margin-top:32px}
+.gravity-day + .gravity-day {margin-top:16px}
 .gravity-day-heading {
   --g-button-height:var(--travel-control-height);--g-button-padding:12px;--g-button-border-radius:18px;
   --g-button-background-color:#f3f3f3;min-height:var(--travel-control-height);
@@ -514,7 +514,7 @@ html,body {height:100%;width:100%;overflow:hidden;overscroll-behavior:none;scrol
 .constructor-photo-pin {box-sizing:border-box;width:42px;height:42px;border:2px solid white;border-radius:50%;padding:0;background:#f2f2f2;box-shadow:0 2px 8px #0003;cursor:pointer}
 .fallback-photo-marker .constructor-photo-pin {position:relative}
 .constructor-photo-pin img {width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center}
-.constructor-photo-pin span {position:absolute;bottom:-2px;right:-2px;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#111;color:white;font:10px var(--travel-font);border:2px solid white}
+
 .gravity-editor-map .maplibregl-ctrl-bottom-right,.gravity-editor-map .maplibregl-ctrl-bottom-left {bottom:82px}
 .gravity-editor-map .maplibregl-ctrl-group {border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #0001}
 .gravity-editor-map .leaflet-tile {filter:grayscale(.8) saturate(.3) contrast(.85) brightness(1.08)}
@@ -909,12 +909,6 @@ body:has(.add-catalog) .gravity-editor-header .place-search-rest,[inert] .place-
 .place-photo-open {width:100%;height:100%;padding:0;border:0;cursor:zoom-in;position:relative;background:none}
 .place-photo-open img {width:100%;height:100%;object-fit:cover}
 .place-photo-count {position:absolute;bottom:12px;right:12px;padding:6px 10px;border-radius:12px;background:#0009;color:white;font-size:13px}
-.place-gallery-modal .g-modal__content {width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;background:#111}
-.place-gallery-modal .g-modal__content-aligner {padding:0}
-.place-gallery {height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 12px 20px;box-sizing:border-box;gap:12px;color:white;position:relative}
-.place-gallery > img {width:100%;height:calc(100% - 120px);object-fit:contain;touch-action:pan-y}
-.place-gallery-close {position:absolute;top:12px;right:12px}
-.place-gallery nav {display:flex;align-items:center;gap:16px}.place-gallery a {color:white;font-size:12px;text-align:center;max-height:40px;overflow:auto}
 /* Both entry points use the same catalog, filters, sheets and edge-to-edge rails. */
 .places-catalog.add-catalog {height:auto;min-height:70dvh;display:flex;gap:0;margin-inline:-12px;width:calc(100% + 24px)}
 .places-catalog .places-heading {padding-inline:12px}
@@ -951,9 +945,41 @@ body:has(.add-catalog) .gravity-editor-header .place-search-rest,[inert] .place-
 .place-photo-carousel-open > .place-photo-frame {width:100%;height:100%;border-radius:inherit}
 .places-tile-map > .place-photo-carousel,.constructor-place-preview > .place-photo-carousel {height:154px;aspect-ratio:auto;border-radius:26px 26px 0 0}
 .place-detail-hero > .place-photo-carousel {height:100%;aspect-ratio:auto;border-radius:0}
-.place-photo-carousel .photo-arrow {position:absolute;top:50%;transform:translateY(-50%);border-radius:50%;background:#fffD;color:#262626;--g-button-height:28px;min-width:28px;z-index:2}
-.photo-arrow-prev {left:8px}.photo-arrow-next {right:8px}
-.photo-position {position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:#0008;color:#fff;border-radius:12px;padding:3px 8px;font:500 12px/16px var(--travel-font);pointer-events:none}
-.place-detail-hero .photo-position {bottom:16px}
-.place-photo-carousel:focus-within {outline:2px solid var(--g-color-line-focus);outline-offset:2px}
-@media(hover:hover){.photo-arrow{opacity:0}.place-photo-carousel:hover .photo-arrow,.place-photo-carousel:focus-within .photo-arrow{opacity:1}}
+
+.photo-pagination{position:absolute;bottom:calc(var(--photo-overlap,20px) + 1px);left:50%;transform:translateX(-50%);display:flex;gap:4px;align-items:center;justify-content:center;max-width:calc(100% - 24px);overflow:auto;scrollbar-width:none;z-index:2}
+.photo-pagination button{border:0;background:none;padding:8px 0;display:grid;place-items:center;cursor:pointer;flex:none}
+.photo-pagination button span{display:block;width:8px;height:8px;border-radius:50%;background:#ffffff80}
+.photo-pagination button[aria-current=true] span{background:#fff}
+.photo-pagination button:focus-visible{outline:2px solid white;outline-offset:-2px;border-radius:8px}
+.place-detail-hero .place-photo-carousel{--photo-overlap:24px}
+.places-tile-map > .place-photo-carousel,.constructor-place-preview > .place-photo-carousel{height:166px}
+.place-card-skeleton.places-tile-map .place-card-skeleton-image{height:166px}
+.place-photo-carousel:focus-within{outline:2px solid var(--g-color-line-focus);outline-offset:2px}
+
+/* Fullscreen media controls remain outside the draggable photo. */
+.photo-viewer-modal{z-index:3000;--g-modal-width:100vw;--g-modal-border-radius:0}
+.photo-viewer-modal .g-modal__content-aligner{display:flex;align-items:stretch;height:100dvh;padding:0}
+.photo-viewer-modal .g-modal__content{height:100dvh;width:100vw;max-width:100vw;max-height:100dvh;margin:0;overflow:hidden;background:#111;border-radius:0}
+.photo-viewer{height:100%;display:grid;grid-template-rows:minmax(0,1fr) auto;position:relative;padding:calc(68px + env(safe-area-inset-top,0px)) 12px calc(16px + env(safe-area-inset-bottom,0px));box-sizing:border-box;color:white;background:#111}
+.photo-viewer-stage{position:relative;min-height:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.photo-viewer-stage>img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.photo-viewer .photo-viewer-control{position:absolute;z-index:5;width:44px;height:44px;--g-button-height:44px;--g-button-border-radius:100px;--g-button-text-color:#111;--g-button-text-color-hover:#111;color:#111;background:#fffffff2;border-radius:50%;--g-button-background-color:#fffffff2;--g-button-background-color-hover:#fff}
+.photo-viewer-control .g-button__icon{color:#111}
+.photo-viewer .photo-viewer-close{top:calc(12px + env(safe-area-inset-top,0px));right:12px}
+.photo-viewer-prev{left:0;top:50%;transform:translateY(-50%)}.photo-viewer-next{right:0;top:50%;transform:translateY(-50%)}
+.photo-viewer-footer{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:8px;min-height:24px}
+.photo-viewer-footer .photo-pagination{position:static;transform:none;max-width:100%;flex:none}
+.photo-viewer-footer a{color:white;font:12px/18px var(--travel-font);text-align:center;max-height:54px;overflow:auto}
+.gravity-sheet-editor .gravity-editor-actions{gap:12px}
+
+/* Map / Map-module, Figma 327:14415 and its three visual states. */
+.constructor-photo-pin.map-place-marker{box-sizing:border-box;width:36px;height:36px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;opacity:1;--map-place-ring:#fff}
+.constructor-photo-pin.map-place-marker[data-selected=true]{--map-place-ring:#000;border:0;box-shadow:none}
+.constructor-photo-pin.map-place-marker[data-saved=true]{--map-place-ring:#d10000}
+.map-place-media{position:absolute;inset:0;display:block;box-sizing:border-box;border:2px solid var(--map-place-ring);border-radius:100px;overflow:hidden;background:#e9e9e9}
+.constructor-photo-pin .map-place-media>img{display:block;width:100%;height:100%;border-radius:100px;object-fit:cover}
+.map-place-label{position:absolute;left:42px;top:50%;transform:translateY(-50%);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;width:max-content;max-width:120px;white-space:normal;overflow-wrap:anywhere;text-align:left;font:500 13px/15px var(--travel-font);color:rgba(0,0,0,.7);text-shadow:0 1px 1px white,1px 0 1px white,-1px 0 1px white}
+.map-place-label[data-hidden=true]{visibility:hidden}
+.map-place-favorite,.map-place-number{position:absolute;bottom:0;right:0;display:grid;place-items:center;width:14px;height:14px;box-sizing:border-box;border-radius:100px;background:#d10000;color:white}
+.constructor-photo-pin .map-place-favorite>img{display:block;inline-size:10px;block-size:10px;width:10px;height:10px;border-radius:0;object-fit:contain}
+.map-place-number{background:#111;width:17px;height:17px;font:10px/13px var(--travel-font);border:2px solid white;right:-2px;bottom:-2px}

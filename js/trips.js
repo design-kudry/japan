@@ -137,6 +137,9 @@
     const href = tripPath(trip);
     try {localStorage.setItem(activeTripKey,href);} catch {}
     GravityTrips.render(root,'route',{
+      bookings:(trip||saved).bookings||[],
+      saveBooking(booking){const owner=trip||saved;const previous=owner.bookings;owner.bookings=[...(previous||[]).filter(b=>b.id!==booking.id),booking];try{persist();render();return '';}catch{owner.bookings=previous;return 'Не удалось сохранить бронирование. Проверьте свободное место в браузере.';}},
+      deleteBooking(id){const owner=trip||saved;const previous=owner.bookings;owner.bookings=(previous||[]).filter(b=>b.id!==id);try{persist();render();return '';}catch{owner.bookings=previous;return 'Не удалось удалить бронирование.';}},
       key:tripPath(trip),tab, placesContent:tab === 'places' ? (pageForm ? formMarkup() : currentPlace ? placeDetails(trip) : placesPage(trip)) : '',
       expenses:isJapan ? EXPENSES : [],trips,
       title:isJapan ? 'Япония' : name(trip),date:trips.find(item => item.href === href).date,current:selectedDay,days,routeHref:href,placesHref:href+'/places',
